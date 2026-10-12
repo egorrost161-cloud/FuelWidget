@@ -1,5 +1,6 @@
 package com.example.fuelwidget;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -10,9 +11,10 @@ import android.car.hardware.CarSensorManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -21,38 +23,43 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import java.util.List;
+import java.util.Set;
+
 public class FloatingFuelService extends Service {
 
-    private static final String PREFS = "FuelWidgetPrefs";
-    private static final String KEY_X = "pos_x";
-    private static final String KEY_Y = "pos_y";
-    private static final String KEY_SIZE = "size_index";
+    private static final long UPDATE_INTERVAL = 5 * 60 * 1000L;   // 5 минут
+    private static final long VISIBILITY_CHECK_INTERVAL = 2000L; // 2 секунды
 
     private WindowManager windowManager;
     private View floatingView;
     private WindowManager.LayoutParams params;
     private TextView fuelText;
-    private TextView iconText;
+    private ImageView iconView;
+
+    private SettingsManager settings;
 
     private Car mCar;
     private CarSensorManager mSensorManager;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final long UPDATE_INTERVAL = 5 * 60 * 1000L;
-
-    private final int[] SIZES = {50, 70, 100};
-    private int sizeIndex = 1;
 
     private float touchStartX, touchStartY;
     private int startX, startY;
     private boolean isDragging = false;
     private long touchStartTime = 0;
+
+    private float lastFuel = -1f;
+    private boolean lastLow = false;
+
+    // === Задачи по таймеру ===
 
     private final Runnable updateTask = new Runnable() {
         @Override
@@ -62,15 +69,23 @@ public class FloatingFuelService extends Service {
         }
     };
 
+    private final Runnable visibilityTask = new Runnable() {
+        @Override
+        public void run() {
+            checkActiveApp();
+            handler.postDelayed(this, VISIBILITY_CHECK_INTERVAL);
+        }
+    };
+
+    // === Подключение к Car ===
+
     private final ServiceConnection carConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             try {
                 mSensorManager = (CarSensorManager) mCar.getCarManager(Car.SENSOR_SERVICE);
-                Toast.makeText(FloatingFuelService.this, "Car подключён", Toast.LENGTH_SHORT).show();
                 readFuel();
             } catch (Exception e) {
-                Toast.makeText(FloatingFuelService.this, "Ошибка Car: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 showError();
             }
         }
@@ -81,10 +96,12 @@ public class FloatingFuelService extends Service {
         }
     };
 
+    // === Жизненный цикл сервиса ===
+
     @Override
     public void onCreate() {
         super.onCreate();
-        Toast.makeText(this, "Сервис: onCreate", Toast.LENGTH_SHORT).show();
+        settings = new SettingsManager(this);
 
         try {
             createNotificationChannel();
@@ -96,43 +113,26 @@ public class FloatingFuelService extends Service {
                         .build();
                 startForeground(1, notification);
             }
-            Toast.makeText(this, "Сервис: startForeground OK", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Ошибка startForeground: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (Exception ignored) {
         }
 
-        try {
-            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-            Toast.makeText(this, "Сервис: windowManager OK", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Ошибка windowManager: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-
-        try {
-            createFloatingView();
-            Toast.makeText(this, "Сервис: окно добавлено", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Ошибка окна: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-
-        try {
-            connectCar();
-            Toast.makeText(this, "Сервис: connectCar вызван", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Ошибка Car: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        createFloatingView();
+        connectCar();
 
         handler.post(updateTask);
-        Toast.makeText(this, "Сервис: создан полностью", Toast.LENGTH_SHORT).show();
+        handler.post(visibilityTask);
     }
+
+    // === Создание плавающего окна ===
 
     private void createFloatingView() {
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_fuel, null);
         fuelText = floatingView.findViewById(R.id.fuel_text);
-        iconText = floatingView.findViewById(R.id.fuel_icon);
+        iconView = floatingView.findViewById(R.id.fuel_icon);
 
-        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        sizeIndex = prefs.getInt(KEY_SIZE, 1);
+        // Тонкий шрифт как у системных иконок
+        fuelText.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
 
         int type;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -150,10 +150,10 @@ public class FloatingFuelService extends Service {
         );
 
         params.gravity = Gravity.TOP | Gravity.START;
-        params.x = prefs.getInt(KEY_X, 100);
-        params.y = prefs.getInt(KEY_Y, 100);
+        params.x = settings.getPosX();
+        params.y = settings.getPosY();
 
-        applySize();
+        applySizes();
 
         floatingView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -184,13 +184,9 @@ public class FloatingFuelService extends Service {
                     case MotionEvent.ACTION_UP:
                         long pressDuration = System.currentTimeMillis() - touchStartTime;
                         if (!isDragging && pressDuration > 800) {
-                            changeSize();
+                            // долгое нажатие — размер НЕ меняем, теперь всё в настройках
                         } else if (isDragging) {
-                            SharedPreferences.Editor editor =
-                                    getSharedPreferences(PREFS, MODE_PRIVATE).edit();
-                            editor.putInt(KEY_X, params.x);
-                            editor.putInt(KEY_Y, params.y);
-                            editor.apply();
+                            settings.setPosition(params.x, params.y);
                         }
                         return true;
                 }
@@ -201,22 +197,26 @@ public class FloatingFuelService extends Service {
         windowManager.addView(floatingView, params);
     }
 
-    private void applySize() {
-        if (fuelText == null) return;
+    // === Применение размеров (окна, шрифта, иконки) ===
+
+    private void applySizes() {
+        if (fuelText == null || iconView == null) return;
+
         float density = getResources().getDisplayMetrics().density;
-        float sizeSp = SIZES[sizeIndex] / density;
-        fuelText.setTextSize(sizeSp);
-        if (iconText != null) iconText.setTextSize(sizeSp * 0.8f);
+
+        // Размер шрифта
+        float fontSp = settings.getFontSize();
+        fuelText.setTextSize(fontSp);
+
+        // Размер иконки
+        int iconPx = (int) (settings.getIconSize() * density);
+        ViewGroup.LayoutParams lp = iconView.getLayoutParams();
+        lp.width = iconPx;
+        lp.height = iconPx;
+        iconView.setLayoutParams(lp);
     }
 
-    private void changeSize() {
-        sizeIndex = (sizeIndex + 1) % SIZES.length;
-        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-                .putInt(KEY_SIZE, sizeIndex).apply();
-        applySize();
-        String[] names = {"маленький", "средний", "большой"};
-        Toast.makeText(this, "Размер: " + names[sizeIndex], Toast.LENGTH_SHORT).show();
-    }
+    // === Подключение к Car ===
 
     private void connectCar() {
         try {
@@ -225,10 +225,11 @@ public class FloatingFuelService extends Service {
                 mCar.connect();
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Ошибка создания Car: " + e.getMessage(), Toast.LENGTH_LONG).show();
             showError();
         }
     }
+
+    // === Чтение топлива ===
 
     private void readFuel() {
         if (mSensorManager == null) return;
@@ -240,6 +241,8 @@ public class FloatingFuelService extends Service {
                 if (event.intValues != null && event.intValues.length > 0) {
                     low = event.intValues[0] == 1;
                 }
+                lastFuel = fuel;
+                lastLow = low;
                 updateFuelText(fuel, low);
                 return;
             }
@@ -249,15 +252,27 @@ public class FloatingFuelService extends Service {
         }
     }
 
+    // === Обновление текста ===
+
     private void updateFuelText(float fuel, boolean low) {
         if (fuelText == null) return;
         handler.post(new Runnable() {
             @Override
             public void run() {
-                fuelText.setText(String.format("%.0f Л", fuel));
-                int color = low ? Color.RED : Color.BLACK;
+                int liters = (int) fuel;
+                fuelText.setText(liters + " " + getLiterWord(liters));
+
+                int color;
+                if (low) {
+                    color = Color.RED;
+                } else {
+                    color = isNightMode() ? Color.WHITE : Color.BLACK;
+                }
+
                 fuelText.setTextColor(color);
-                if (iconText != null) iconText.setTextColor(color);
+                if (iconView != null) {
+                    iconView.setColorFilter(color);
+                }
             }
         });
     }
@@ -267,12 +282,73 @@ public class FloatingFuelService extends Service {
             @Override
             public void run() {
                 if (fuelText != null) {
-                    fuelText.setText("--");
-                    fuelText.setTextColor(Color.BLACK);
+                    fuelText.setText("-- литров");
+                    int color = isNightMode() ? Color.WHITE : Color.BLACK;
+                    fuelText.setTextColor(color);
+                    if (iconView != null) {
+                        iconView.setColorFilter(color);
+                    }
                 }
             }
         });
     }
+
+    // === Склонение слова «литр» ===
+
+    private String getLiterWord(int n) {
+        int mod10 = n % 10;
+        int mod100 = n % 100;
+        if (mod10 == 1 && mod100 != 11) {
+            return "литр";
+        } else if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+            return "литра";
+        } else {
+            return "литров";
+        }
+    }
+
+    // === Определение ночного режима ===
+
+    private boolean isNightMode() {
+        int nightModeFlags = getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    // === Скрытие окна в выбранных приложениях ===
+
+    private void checkActiveApp() {
+        try {
+            ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            List<ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(1);
+            if (tasks == null || tasks.isEmpty()) return;
+
+            String topPackage = tasks.get(0).topActivity.getPackageName();
+            Set<String> hiddenApps = settings.getHiddenApps();
+
+            if (hiddenApps.contains(topPackage)) {
+                hideWindow();
+            } else {
+                showWindow();
+            }
+        } catch (Exception ignored) {
+            // если нет доступа — окно остаётся видимым
+        }
+    }
+
+    private void hideWindow() {
+        if (floatingView != null && floatingView.getVisibility() != View.GONE) {
+            floatingView.setVisibility(View.GONE);
+        }
+    }
+
+    private void showWindow() {
+        if (floatingView != null && floatingView.getVisibility() != View.VISIBLE) {
+            floatingView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    // === Канал уведомления ===
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -286,8 +362,15 @@ public class FloatingFuelService extends Service {
         }
     }
 
+    // === Служебные методы ===
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // При каждом запуске сервиса (например, из настроек) — перечитываем настройки
+        if (floatingView != null && windowManager != null) {
+            applySizes();
+            updateFuelText(lastFuel, lastLow);
+        }
         return START_STICKY;
     }
 
@@ -295,6 +378,7 @@ public class FloatingFuelService extends Service {
     public void onDestroy() {
         super.onDestroy();
         handler.removeCallbacks(updateTask);
+        handler.removeCallbacks(visibilityTask);
         if (floatingView != null && windowManager != null) {
             try { windowManager.removeView(floatingView); } catch (Exception ignored) {}
         }
