@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,42 +14,120 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int OVERLAY_PERMISSION_REQ = 1001;
 
+    private SettingsManager settings;
+    private TextView txtWindowSize;
+    private TextView txtFontSize;
+    private TextView txtIconSize;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        // Перехватываем все ошибки и показываем в Toast
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable e) {
-                final String error = e.getClass().getSimpleName() + ": " + e.getMessage();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "КРАШ: " + error, Toast.LENGTH_LONG).show();
-                    }
-                });
-                try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
-                android.os.Process.killProcess(android.os.Process.myPid());
+        settings = new SettingsManager(this);
+
+        txtWindowSize = findViewById(R.id.txt_window_size);
+        txtFontSize = findViewById(R.id.txt_font_size);
+        txtIconSize = findViewById(R.id.txt_icon_size);
+
+        updateSizeLabels();
+
+        findViewById(R.id.btn_window_minus).setOnClickListener(v -> {
+            int size = settings.getWindowSize();
+            if (size > SettingsManager.MIN_WINDOW_SIZE) {
+                settings.setWindowSize(size - 1);
+                updateSizeLabels();
+                applySettings();
             }
         });
 
-        Toast.makeText(this, "Fuel: onCreate", Toast.LENGTH_SHORT).show();
+        findViewById(R.id.btn_window_plus).setOnClickListener(v -> {
+            int size = settings.getWindowSize();
+            if (size < SettingsManager.MAX_WINDOW_SIZE) {
+                settings.setWindowSize(size + 1);
+                updateSizeLabels();
+                applySettings();
+            }
+        });
 
+        findViewById(R.id.btn_font_minus).setOnClickListener(v -> {
+            int size = settings.getFontSize();
+            if (size > SettingsManager.MIN_FONT_SIZE) {
+                settings.setFontSize(size - 1);
+                updateSizeLabels();
+                applySettings();
+            }
+        });
+
+        findViewById(R.id.btn_font_plus).setOnClickListener(v -> {
+            int size = settings.getFontSize();
+            if (size < SettingsManager.MAX_FONT_SIZE) {
+                settings.setFontSize(size + 1);
+                updateSizeLabels();
+                applySettings();
+            }
+        });
+
+        findViewById(R.id.btn_icon_minus).setOnClickListener(v -> {
+            int size = settings.getIconSize();
+            if (size > SettingsManager.MIN_ICON_SIZE) {
+                settings.setIconSize(size - 1);
+                updateSizeLabels();
+                applySettings();
+            }
+        });
+
+        findViewById(R.id.btn_icon_plus).setOnClickListener(v -> {
+            int size = settings.getIconSize();
+            if (size < SettingsManager.MAX_ICON_SIZE) {
+                settings.setIconSize(size + 1);
+                updateSizeLabels();
+                applySettings();
+            }
+        });
+
+        findViewById(R.id.btn_app_list).setOnClickListener(v -> {
+            startActivity(new Intent(this, AppListActivity.class));
+        });
+
+        findViewById(R.id.btn_reset).setOnClickListener(v -> {
+            settings.resetAll();
+            updateSizeLabels();
+            applySettings();
+            Toast.makeText(this, "Настройки сброшены", Toast.LENGTH_SHORT).show();
+        });
+
+        checkOverlayPermission();
+    }
+
+    private void updateSizeLabels() {
+        txtWindowSize.setText(settings.getWindowSize() + " dp");
+        txtFontSize.setText(settings.getFontSize() + " sp");
+        txtIconSize.setText(settings.getIconSize() + " dp");
+    }
+
+    private void applySettings() {
+        Intent serviceIntent = new Intent(this, FloatingFuelService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+    }
+
+    private void checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
-                Toast.makeText(this, "Нужно разрешение на оверлей", Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(
                         Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         Uri.parse("package:" + getPackageName())
                 );
                 startActivityForResult(intent, OVERLAY_PERMISSION_REQ);
             } else {
-                Toast.makeText(this, "Разрешение есть, запускаем сервис", Toast.LENGTH_SHORT).show();
-                startFloatingService();
+                applySettings();
             }
         } else {
-            startFloatingService();
+            applySettings();
         }
     }
 
@@ -58,27 +137,11 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == OVERLAY_PERMISSION_REQ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Settings.canDrawOverlays(this)) {
-                    Toast.makeText(this, "Разрешение выдано, запускаем сервис", Toast.LENGTH_SHORT).show();
-                    startFloatingService();
+                    applySettings();
                 } else {
                     Toast.makeText(this, "Разрешение не выдано", Toast.LENGTH_LONG).show();
                 }
             }
-        }
-    }
-
-    private void startFloatingService() {
-        try {
-            Intent serviceIntent = new Intent(this, FloatingFuelService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
-            } else {
-                startService(serviceIntent);
-            }
-            Toast.makeText(this, "Сервис запущен", Toast.LENGTH_SHORT).show();
-        } catch (Throwable e) {
-            Toast.makeText(this, "Ошибка запуска: " + e.getClass().getSimpleName() + " " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
         }
     }
 }
