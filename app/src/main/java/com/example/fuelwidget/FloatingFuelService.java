@@ -8,7 +8,6 @@ import android.car.Car;
 import android.car.hardware.CarSensorEvent;
 import android.car.hardware.CarSensorManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -23,7 +22,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -88,9 +86,8 @@ public class FloatingFuelService extends Service {
 
         // Foreground service — обязательно для Android 8+
         createNotificationChannel();
-        Notification notification = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notification = new Notification.Builder(this, "fuel_channel")
+            Notification notification = new Notification.Builder(this, "fuel_channel")
                     .setContentTitle("Fuel")
                     .setContentText("Отслеживание топлива")
                     .setSmallIcon(android.R.drawable.ic_menu_info_details)
@@ -167,7 +164,8 @@ public class FloatingFuelService extends Service {
                             changeSize();
                         } else if (isDragging) {
                             // Сохраняем позицию
-                            SharedPreferences.Editor editor = getSharedPreferences(PREFS, MODE_PRIVATE).edit();
+                            SharedPreferences.Editor editor =
+                                    getSharedPreferences(PREFS, MODE_PRIVATE).edit();
                             editor.putInt(KEY_X, params.x);
                             editor.putInt(KEY_Y, params.y);
                             editor.apply();
@@ -183,15 +181,19 @@ public class FloatingFuelService extends Service {
 
     private void applySize() {
         if (fuelText == null) return;
-        int sizePx = (int) (SIZES[sizeIndex] * getResources().getDisplayMetrics().density);
-        fuelText.setTextSize(sizePx / getResources().getDisplayMetrics().density / 2);
+        float density = getResources().getDisplayMetrics().density;
+        float sizeSp = SIZES[sizeIndex] / density;
+        fuelText.setTextSize(sizeSp);
+        if (iconText != null) iconText.setTextSize(sizeSp * 0.8f);
     }
 
     private void changeSize() {
         sizeIndex = (sizeIndex + 1) % SIZES.length;
-        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_SIZE, sizeIndex).apply();
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                .putInt(KEY_SIZE, sizeIndex).apply();
         applySize();
-        Toast.makeText(this, "Размер: " + (sizeIndex + 1), Toast.LENGTH_SHORT).show();
+        String[] names = {"маленький", "средний", "большой"};
+        Toast.makeText(this, "Размер: " + names[sizeIndex], Toast.LENGTH_SHORT).show();
     }
 
     private void connectCar() {
@@ -209,15 +211,14 @@ public class FloatingFuelService extends Service {
         if (mSensorManager == null) return;
         try {
             CarSensorEvent event = mSensorManager.getLatestSensorEvent(0x11600307);
-            if (event != null) {
-                CarSensorEvent.FuelLevelData data = event.getFuelLevelData(null);
-                if (data != null) {
-                    float fuel = data.level;
-                    boolean low = event.getFuelLevelLowData(null) != null
-                            && event.getFuelLevelLowData(null).lowFuel;
-                    updateFuelText(fuel, low);
-                    return;
+            if (event != null && event.floatValues != null && event.floatValues.length > 0) {
+                float fuel = event.floatValues[0];
+                boolean low = false;
+                if (event.intValues != null && event.intValues.length > 0) {
+                    low = event.intValues[0] == 1;
                 }
+                updateFuelText(fuel, low);
+                return;
             }
             showError();
         } catch (Exception e) {
@@ -266,12 +267,11 @@ public class FloatingFuelService extends Service {
         super.onDestroy();
         handler.removeCallbacks(updateTask);
         if (floatingView != null && windowManager != null) {
-            windowManager.removeView(floatingView);
+            try { windowManager.removeView(floatingView); } catch (Exception ignored) {}
         }
-        if (mSensorManager != null) {
-            try { mSensorManager.unregisterListener(null); } catch (Exception ignored) {}
+        if (mCar != null && mCar.isConnected()) {
+            try { mCar.disconnect(); } catch (Exception ignored) {}
         }
-        if (mCar != null && mCar.isConnected()) mCar.disconnect();
     }
 
     @Nullable
