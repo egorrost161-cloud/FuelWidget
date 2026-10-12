@@ -17,9 +17,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Перехватываем все ошибки и показываем в Toast
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread thread, Throwable e) {
+                final String error = e.getClass().getSimpleName() + ": " + e.getMessage();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "КРАШ: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
+                try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
+                android.os.Process.killProcess(android.os.Process.myPid());
+            }
+        });
+
         Toast.makeText(this, "Fuel: onCreate", Toast.LENGTH_SHORT).show();
 
-        // Проверяем разрешение на плавающее окно
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 Toast.makeText(this, "Нужно разрешение на оверлей", Toast.LENGTH_LONG).show();
@@ -35,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startFloatingService();
         }
-        // НЕ вызываем finish() — пусть активити остаётся открытой
     }
 
     @Override
@@ -62,8 +76,9 @@ public class MainActivity extends AppCompatActivity {
                 startService(serviceIntent);
             }
             Toast.makeText(this, "Сервис запущен", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Ошибка запуска: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (Throwable e) {
+            Toast.makeText(this, "Ошибка запуска: " + e.getClass().getSimpleName() + " " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
         }
     }
 }
