@@ -7,22 +7,22 @@
     android:background="@android:color/transparent"
     android:padding="4dp">
 
-    <TextView
+    <ImageView
         android:id="@+id/fuel_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="⛽"
-        android:textSize="20sp"
-        android:textColor="#000000"
-        android:layout_marginEnd="4dp" />
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_fuel"
+        android:layout_marginEnd="6dp"
+        android:contentDescription="Fuel icon" />
 
     <TextView
         android:id="@+id/fuel_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="-- Л"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#000000" />
+        android:text="-- литров"
+        android:textSize="16sp"
+        android:textStyle="normal"
+        android:textColor="#000000"
+        android:fontFamily="sans-serif-light" />
 
 </LinearLayout>
