@@ -1,7 +1,9 @@
 package com.example.fuelwidget;
 
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,7 +29,7 @@ public class AppListActivity extends AppCompatActivity {
 
     private SettingsManager settings;
     private List<AppInfo> apps = new ArrayList<>();
-    private Set<String> selectedPackages = new HashSet<>();
+    private Set<String> selected = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +37,7 @@ public class AppListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_app_list);
 
         settings = new SettingsManager(this);
-        selectedPackages = new HashSet<>(settings.getHiddenApps());
+        selected = new HashSet<>(settings.getHiddenApps());
 
         ListView listView = findViewById(R.id.list_apps);
         Button btnSave = findViewById(R.id.btn_save_apps);
@@ -45,38 +47,38 @@ public class AppListActivity extends AppCompatActivity {
         final AppAdapter adapter = new AppAdapter();
         listView.setAdapter(adapter);
 
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            AppInfo app = apps.get(position);
-            if (selectedPackages.contains(app.packageName)) {
-                selectedPackages.remove(app.packageName);
-            } else {
-                selectedPackages.add(app.packageName);
-            }
+        listView.setOnItemClickListener((p, v, pos, id) -> {
+            AppInfo app = apps.get(pos);
+            if (selected.contains(app.packageName)) selected.remove(app.packageName);
+            else selected.add(app.packageName);
             adapter.notifyDataSetChanged();
         });
 
         btnSave.setOnClickListener(v -> {
-            settings.setHiddenApps(selectedPackages);
-            Toast.makeText(this, "Сохранено: " + selectedPackages.size() + " приложений",
-                    Toast.LENGTH_SHORT).show();
+            settings.setHiddenApps(selected);
+            Toast.makeText(this, "Сохранено: " + selected.size(), Toast.LENGTH_SHORT).show();
             finish();
         });
     }
 
     private void loadApps() {
         PackageManager pm = getPackageManager();
-        List<ApplicationInfo> installedApps = pm.getInstalledApplications(0);
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> resolved = pm.queryIntentActivities(mainIntent, 0);
 
-        for (ApplicationInfo appInfo : installedApps) {
+        for (ResolveInfo ri : resolved) {
+            ApplicationInfo ai = ri.activityInfo.applicationInfo;
+            if (ai.packageName.equals(getPackageName())) continue;
+
             AppInfo info = new AppInfo();
-            info.packageName = appInfo.packageName;
-            info.appName = pm.getApplicationLabel(appInfo).toString();
-            info.icon = appInfo.loadIcon(pm);
+            info.packageName = ai.packageName;
+            info.appName = pm.getApplicationLabel(ai).toString();
+            info.icon = ai.loadIcon(pm);
             apps.add(info);
         }
 
         Collections.sort(apps, new Comparator<AppInfo>() {
-            @Override
             public int compare(AppInfo a, AppInfo b) {
                 return a.appName.compareToIgnoreCase(b.appName);
             }
@@ -90,40 +92,23 @@ public class AppListActivity extends AppCompatActivity {
     }
 
     private class AppAdapter extends BaseAdapter {
+        public int getCount() { return apps.size(); }
+        public Object getItem(int p) { return apps.get(p); }
+        public long getItemId(int p) { return p; }
 
-        @Override
-        public int getCount() {
-            return apps.size();
-        }
+        public View getView(int pos, View cv, ViewGroup parent) {
+            if (cv == null) cv = LayoutInflater.from(AppListActivity.this)
+                    .inflate(R.layout.item_app, parent, false);
 
-        @Override
-        public Object getItem(int position) {
-            return apps.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = LayoutInflater.from(AppListActivity.this)
-                        .inflate(R.layout.item_app, parent, false);
-            }
-
-            AppInfo app = apps.get(position);
-
-            ImageView icon = convertView.findViewById(R.id.app_icon);
-            TextView name = convertView.findViewById(R.id.app_name);
-            CheckBox checkBox = convertView.findViewById(R.id.app_checkbox);
+            AppInfo app = apps.get(pos);
+            ImageView icon = cv.findViewById(R.id.app_icon);
+            TextView name = cv.findViewById(R.id.app_name);
+            CheckBox cb = cv.findViewById(R.id.app_checkbox);
 
             icon.setImageDrawable(app.icon);
             name.setText(app.appName);
-            checkBox.setChecked(selectedPackages.contains(app.packageName));
-
-            return convertView;
+            cb.setChecked(selected.contains(app.packageName));
+            return cv;
         }
     }
 }
