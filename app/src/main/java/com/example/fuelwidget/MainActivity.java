@@ -79,10 +79,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Меняем вес на шаг 50
     private void changeWeight(int d) {
-        int w = settings.getFontWeight() + d;
-        if (w < SettingsManager.FONT_WEIGHT_LIGHT) w = SettingsManager.FONT_WEIGHT_LIGHT;
-        if (w > SettingsManager.FONT_WEIGHT_BOLD) w = SettingsManager.FONT_WEIGHT_BOLD;
+        int step = SettingsManager.FONT_WEIGHT_STEP;
+        int w = settings.getFontWeight() + (d * step);
+        if (w < SettingsManager.MIN_FONT_WEIGHT) w = SettingsManager.MIN_FONT_WEIGHT;
+        if (w > SettingsManager.MAX_FONT_WEIGHT) w = SettingsManager.MAX_FONT_WEIGHT;
         settings.setFontWeight(w); updateLabels(); applySettings();
     }
 
@@ -90,17 +92,7 @@ public class MainActivity extends AppCompatActivity {
         txtWindowSize.setText(settings.getWindowSize() + " dp");
         txtFontSize.setText(settings.getFontSize() + " sp");
         txtIconSize.setText(settings.getIconSize() + " dp");
-        txtFontWeight.setText(weightName(settings.getFontWeight()));
-    }
-
-    private String weightName(int w) {
-        switch (w) {
-            case 0: return "Тонкий";
-            case 1: return "Обычный";
-            case 2: return "Средний";
-            case 3: return "Жирный";
-            default: return "Тонкий";
-        }
+        txtFontWeight.setText(String.valueOf(settings.getFontWeight()));
     }
 
     private void applySettings() {
