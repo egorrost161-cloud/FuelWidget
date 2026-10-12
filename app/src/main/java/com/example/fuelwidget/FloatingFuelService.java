@@ -169,14 +169,11 @@ public class FloatingFuelService extends Service {
         iconView.setLayoutParams(lp);
     }
 
+    // Применяем вес шрифта: 100-900
     private Typeface getTypeface() {
-        switch (settings.getFontWeight()) {
-            case 0: return Typeface.create("sans-serif-light", Typeface.NORMAL);
-            case 1: return Typeface.create("sans-serif", Typeface.NORMAL);
-            case 2: return Typeface.create("sans-serif-medium", Typeface.NORMAL);
-            case 3: return Typeface.create("sans-serif", Typeface.BOLD);
-            default: return Typeface.create("sans-serif-light", Typeface.NORMAL);
-        }
+        int weight = settings.getFontWeight();
+        // Typeface.create() принимает вес 100-900, система округлит до ближайшего доступного
+        return Typeface.create("sans-serif", weight);
     }
 
     private void connectCar() {
