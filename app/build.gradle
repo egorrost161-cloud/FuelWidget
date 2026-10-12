@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.example.fuelwidget'
-    compileSdk 29
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.fuelwidget"
         minSdk 28
-        targetSdk 29
+        targetSdk 34
         versionCode 1
         versionName "1.0"
     }
@@ -25,7 +25,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    // Это даёт доступ к android.car.* классам без скачивания JAR
     useLibrary 'android.car'
 }
 
