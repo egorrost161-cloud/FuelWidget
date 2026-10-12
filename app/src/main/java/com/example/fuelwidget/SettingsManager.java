@@ -21,7 +21,7 @@ public class SettingsManager {
     public static final int DEFAULT_WINDOW_SIZE = 42;
     public static final int DEFAULT_FONT_SIZE = 16;
     public static final int DEFAULT_ICON_SIZE = 20;
-    public static final int DEFAULT_FONT_WEIGHT = 0;
+    public static final int DEFAULT_FONT_WEIGHT = 400;
 
     public static final int MIN_WINDOW_SIZE = 20;
     public static final int MAX_WINDOW_SIZE = 100;
@@ -30,10 +30,10 @@ public class SettingsManager {
     public static final int MIN_ICON_SIZE = 10;
     public static final int MAX_ICON_SIZE = 60;
 
-    public static final int FONT_WEIGHT_LIGHT = 0;
-    public static final int FONT_WEIGHT_NORMAL = 1;
-    public static final int FONT_WEIGHT_MEDIUM = 2;
-    public static final int FONT_WEIGHT_BOLD = 3;
+    // Вес шрифта: 100 (тонкий) ... 900 (жирный), шаг 50
+    public static final int MIN_FONT_WEIGHT = 100;
+    public static final int MAX_FONT_WEIGHT = 900;
+    public static final int FONT_WEIGHT_STEP = 50;
 
     private final SharedPreferences prefs;
 
