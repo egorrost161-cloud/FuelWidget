@@ -15,9 +15,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int OVERLAY_PERMISSION_REQ = 1001;
 
     private SettingsManager settings;
-    private TextView txtWindowSize;
-    private TextView txtFontSize;
-    private TextView txtIconSize;
+    private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,118 +27,104 @@ public class MainActivity extends AppCompatActivity {
         txtWindowSize = findViewById(R.id.txt_window_size);
         txtFontSize = findViewById(R.id.txt_font_size);
         txtIconSize = findViewById(R.id.txt_icon_size);
+        txtFontWeight = findViewById(R.id.txt_font_weight);
 
-        updateSizeLabels();
+        updateLabels();
 
-        findViewById(R.id.btn_window_minus).setOnClickListener(v -> {
-            int size = settings.getWindowSize();
-            if (size > SettingsManager.MIN_WINDOW_SIZE) {
-                settings.setWindowSize(size - 1);
-                updateSizeLabels();
-                applySettings();
-            }
-        });
+        findViewById(R.id.btn_window_minus).setOnClickListener(v -> changeWindow(-1));
+        findViewById(R.id.btn_window_plus).setOnClickListener(v -> changeWindow(+1));
+        findViewById(R.id.btn_font_minus).setOnClickListener(v -> changeFont(-1));
+        findViewById(R.id.btn_font_plus).setOnClickListener(v -> changeFont(+1));
+        findViewById(R.id.btn_icon_minus).setOnClickListener(v -> changeIcon(-1));
+        findViewById(R.id.btn_icon_plus).setOnClickListener(v -> changeIcon(+1));
+        findViewById(R.id.btn_weight_minus).setOnClickListener(v -> changeWeight(-1));
+        findViewById(R.id.btn_weight_plus).setOnClickListener(v -> changeWeight(+1));
 
-        findViewById(R.id.btn_window_plus).setOnClickListener(v -> {
-            int size = settings.getWindowSize();
-            if (size < SettingsManager.MAX_WINDOW_SIZE) {
-                settings.setWindowSize(size + 1);
-                updateSizeLabels();
-                applySettings();
-            }
-        });
+        findViewById(R.id.btn_app_list).setOnClickListener(v ->
+                startActivity(new Intent(this, AppListActivity.class)));
 
-        findViewById(R.id.btn_font_minus).setOnClickListener(v -> {
-            int size = settings.getFontSize();
-            if (size > SettingsManager.MIN_FONT_SIZE) {
-                settings.setFontSize(size - 1);
-                updateSizeLabels();
-                applySettings();
-            }
-        });
-
-        findViewById(R.id.btn_font_plus).setOnClickListener(v -> {
-            int size = settings.getFontSize();
-            if (size < SettingsManager.MAX_FONT_SIZE) {
-                settings.setFontSize(size + 1);
-                updateSizeLabels();
-                applySettings();
-            }
-        });
-
-        findViewById(R.id.btn_icon_minus).setOnClickListener(v -> {
-            int size = settings.getIconSize();
-            if (size > SettingsManager.MIN_ICON_SIZE) {
-                settings.setIconSize(size - 1);
-                updateSizeLabels();
-                applySettings();
-            }
-        });
-
-        findViewById(R.id.btn_icon_plus).setOnClickListener(v -> {
-            int size = settings.getIconSize();
-            if (size < SettingsManager.MAX_ICON_SIZE) {
-                settings.setIconSize(size + 1);
-                updateSizeLabels();
-                applySettings();
-            }
-        });
-
-        findViewById(R.id.btn_app_list).setOnClickListener(v -> {
-            startActivity(new Intent(this, AppListActivity.class));
+        findViewById(R.id.btn_usage_access).setOnClickListener(v -> {
+            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+            Toast.makeText(this, "Найдите Fuel и включите доступ", Toast.LENGTH_LONG).show();
         });
 
         findViewById(R.id.btn_reset).setOnClickListener(v -> {
             settings.resetAll();
-            updateSizeLabels();
+            updateLabels();
             applySettings();
-            Toast.makeText(this, "Настройки сброшены", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
         });
 
-        checkOverlayPermission();
+        checkOverlay();
     }
 
-    private void updateSizeLabels() {
+    private void changeWindow(int d) {
+        int s = settings.getWindowSize() + d;
+        if (s >= SettingsManager.MIN_WINDOW_SIZE && s <= SettingsManager.MAX_WINDOW_SIZE) {
+            settings.setWindowSize(s); updateLabels(); applySettings();
+        }
+    }
+
+    private void changeFont(int d) {
+        int s = settings.getFontSize() + d;
+        if (s >= SettingsManager.MIN_FONT_SIZE && s <= SettingsManager.MAX_FONT_SIZE) {
+            settings.setFontSize(s); updateLabels(); applySettings();
+        }
+    }
+
+    private void changeIcon(int d) {
+        int s = settings.getIconSize() + d;
+        if (s >= SettingsManager.MIN_ICON_SIZE && s <= SettingsManager.MAX_ICON_SIZE) {
+            settings.setIconSize(s); updateLabels(); applySettings();
+        }
+    }
+
+    private void changeWeight(int d) {
+        int w = settings.getFontWeight() + d;
+        if (w < SettingsManager.FONT_WEIGHT_LIGHT) w = SettingsManager.FONT_WEIGHT_LIGHT;
+        if (w > SettingsManager.FONT_WEIGHT_BOLD) w = SettingsManager.FONT_WEIGHT_BOLD;
+        settings.setFontWeight(w); updateLabels(); applySettings();
+    }
+
+    private void updateLabels() {
         txtWindowSize.setText(settings.getWindowSize() + " dp");
         txtFontSize.setText(settings.getFontSize() + " sp");
         txtIconSize.setText(settings.getIconSize() + " dp");
+        txtFontWeight.setText(weightName(settings.getFontWeight()));
+    }
+
+    private String weightName(int w) {
+        switch (w) {
+            case 0: return "Тонкий";
+            case 1: return "Обычный";
+            case 2: return "Средний";
+            case 3: return "Жирный";
+            default: return "Тонкий";
+        }
     }
 
     private void applySettings() {
-        Intent serviceIntent = new Intent(this, FloatingFuelService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
-        }
+        Intent i = new Intent(this, FloatingFuelService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
+        else startService(i);
     }
 
-    private void checkOverlayPermission() {
+    private void checkOverlay() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
-                Intent intent = new Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName())
-                );
-                startActivityForResult(intent, OVERLAY_PERMISSION_REQ);
-            } else {
-                applySettings();
-            }
-        } else {
-            applySettings();
-        }
+                Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(i, OVERLAY_PERMISSION_REQ);
+            } else applySettings();
+        } else applySettings();
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == OVERLAY_PERMISSION_REQ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    applySettings();
-                } else {
-                    Toast.makeText(this, "Разрешение не выдано", Toast.LENGTH_LONG).show();
-                }
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == OVERLAY_PERMISSION_REQ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+                applySettings();
             }
         }
     }
