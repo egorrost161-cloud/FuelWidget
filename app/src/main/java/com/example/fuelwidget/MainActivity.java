@@ -17,24 +17,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Toast.makeText(this, "Fuel: onCreate", Toast.LENGTH_SHORT).show();
+
         // Проверяем разрешение на плавающее окно
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
-                // Открываем настройки для выдачи разрешения
+                Toast.makeText(this, "Нужно разрешение на оверлей", Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(
                         Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         Uri.parse("package:" + getPackageName())
                 );
                 startActivityForResult(intent, OVERLAY_PERMISSION_REQ);
             } else {
+                Toast.makeText(this, "Разрешение есть, запускаем сервис", Toast.LENGTH_SHORT).show();
                 startFloatingService();
             }
         } else {
             startFloatingService();
         }
-
-        Toast.makeText(this, "Fuel запущен", Toast.LENGTH_SHORT).show();
-        finish();
+        // НЕ вызываем finish() — пусть активити остаётся открытой
     }
 
     @Override
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == OVERLAY_PERMISSION_REQ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Settings.canDrawOverlays(this)) {
+                    Toast.makeText(this, "Разрешение выдано, запускаем сервис", Toast.LENGTH_SHORT).show();
                     startFloatingService();
                 } else {
                     Toast.makeText(this, "Разрешение не выдано", Toast.LENGTH_LONG).show();
@@ -52,11 +54,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startFloatingService() {
-        Intent serviceIntent = new Intent(this, FloatingFuelService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
+        try {
+            Intent serviceIntent = new Intent(this, FloatingFuelService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+            Toast.makeText(this, "Сервис запущен", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка запуска: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }
