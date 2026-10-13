@@ -32,6 +32,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 
 import java.util.Set;
 
@@ -61,6 +62,8 @@ public class FloatingFuelService extends Service {
 
     private float lastFuel = -1f;
     private boolean lastLow = false;
+
+    private Typeface robotoFlex; // Кэшированный вариативный шрифт
 
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
@@ -107,6 +110,13 @@ public class FloatingFuelService extends Service {
             }
         } catch (Exception ignored) {}
 
+        // Загружаем вариативный шрифт один раз
+        try {
+            robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
+        } catch (Exception e) {
+            robotoFlex = null;
+        }
+
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
 
@@ -144,7 +154,6 @@ public class FloatingFuelService extends Service {
 
         floatingView.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
-                // Если виджет заблокирован — не реагируем на касания
                 if (settings.isLocked()) {
                     return false;
                 }
@@ -178,19 +187,38 @@ public class FloatingFuelService extends Service {
         windowManager.addView(floatingView, params);
     }
 
+    /**
+     * Применяет размер шрифта, размер иконки и ПЛАВНЫЙ вес шрифта.
+     * Вес применяется через Paint.setFontFeatureSettings("'wght' N") —
+     * это работает для вариативных шрифтов (Roboto Flex).
+     */
     private void applySizes() {
         if (fuelText == null || iconView == null) return;
+
         float density = getResources().getDisplayMetrics().density;
+
+        // Размер шрифта
         fuelText.setTextSize(settings.getFontSize());
-        fuelText.setTypeface(getTypeface());
+
+        // Применяем шрифт
+        if (robotoFlex != null) {
+            fuelText.setTypeface(robotoFlex);
+        } else {
+            fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        }
+
+        // Плавный вес через вариативную ось 'wght' (только API 21+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            fuelText.getPaint().setFontFeatureSettings(
+                    "'wght' " + settings.getFontWeight());
+        }
+        fuelText.invalidate();
+
+        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
-    }
-
-    private Typeface getTypeface() {
-        return Typeface.create("sans-serif", settings.getFontWeight());
     }
 
     private void connectCar() {
