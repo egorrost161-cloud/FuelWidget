@@ -61,15 +61,19 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
         });
 
-        // Поочерёдная проверка разрешений
         checkOverlayThenUsage();
     }
 
-    /**
-     * 1. Проверяем оверлей → если нет, открываем настройки.
-     * 2. Проверяем usage stats → если нет, открываем настройки.
-     * 3. Если оба есть — запускаем сервис.
-     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // П2: при возврате в приложение — просим сервис обновить топливо
+        Intent i = new Intent(this, FloatingFuelService.class);
+        i.setAction(FloatingFuelService.ACTION_REFRESH);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
+        else startService(i);
+    }
+
     private void checkOverlayThenUsage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
@@ -79,7 +83,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
-        // Оверлей есть — проверяем usage stats
         if (!hasUsageStatsPermission()) {
             Toast.makeText(this, "Разрешите доступ к данным об использовании для Fuel",
                     Toast.LENGTH_LONG).show();
@@ -88,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
                     USAGE_PERMISSION_REQ);
             return;
         }
-        // Оба разрешения есть — запускаем
         applySettings();
     }
 
@@ -171,15 +173,13 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(req, res, data);
 
         if (req == OVERLAY_PERMISSION_REQ) {
-            // Вернулись из настроек оверлея — проверяем снова всю цепочку
             checkOverlayThenUsage();
         } else if (req == USAGE_PERMISSION_REQ) {
-            // Вернулись из настроек usage stats — проверяем снова
             if (hasUsageStatsPermission()) {
                 applySettings();
                 Toast.makeText(this, "Все разрешения получены", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Доступ не выдан. Разрешите вручную в настройках.",
+                Toast.makeText(this, "Доступ не выдан. Разрешите вручную.",
                         Toast.LENGTH_LONG).show();
             }
         }
