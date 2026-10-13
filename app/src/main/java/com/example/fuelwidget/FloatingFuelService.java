@@ -62,11 +62,9 @@ public class FloatingFuelService extends Service {
     private float lastFuel = -1f;
     private boolean lastLow = false;
 
-    // Подписка на изменения конфигурации (для мгновенной смены темы)
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
         public void onConfigurationChanged(Configuration newConfig) {
-            // Тема изменилась — сразу перекрашиваем текст
             updateFuelText(lastFuel, lastLow);
         }
 
@@ -112,7 +110,6 @@ public class FloatingFuelService extends Service {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
 
-        // Подписываемся на изменения конфигурации (тема)
         registerComponentCallbacks(configCallback);
 
         createFloatingView();
@@ -147,6 +144,11 @@ public class FloatingFuelService extends Service {
 
         floatingView.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
+                // Если виджет заблокирован — не реагируем на касания
+                if (settings.isLocked()) {
+                    return false;
+                }
+
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         touchStartX = event.getRawX();
@@ -298,11 +300,9 @@ public class FloatingFuelService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (floatingView != null) {
             applySizes();
-            // Обновляем цвет мгновенно (используем последнее значение топлива)
             updateFuelText(lastFuel, lastLow);
         }
 
-        // П2: если пришёл запрос на обновление топлива — читаем сразу
         if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
             readFuel();
         }
