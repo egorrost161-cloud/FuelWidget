@@ -9,6 +9,7 @@ import android.app.usage.UsageStatsManager;
 import android.car.Car;
 import android.car.hardware.CarSensorEvent;
 import android.car.hardware.CarSensorManager;
+import android.content.ComponentCallbacks;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +37,8 @@ import java.util.Set;
 
 public class FloatingFuelService extends Service {
 
+    public static final String ACTION_REFRESH = "com.example.fuelwidget.ACTION_REFRESH";
+
     private static final long UPDATE_INTERVAL = 5 * 60 * 1000L;
     private static final long VISIBILITY_CHECK_INTERVAL = 1500L;
 
@@ -58,6 +61,18 @@ public class FloatingFuelService extends Service {
 
     private float lastFuel = -1f;
     private boolean lastLow = false;
+
+    // Подписка на изменения конфигурации (для мгновенной смены темы)
+    private final ComponentCallbacks configCallback = new ComponentCallbacks() {
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            // Тема изменилась — сразу перекрашиваем текст
+            updateFuelText(lastFuel, lastLow);
+        }
+
+        @Override
+        public void onLowMemory() {}
+    };
 
     private final Runnable updateTask = new Runnable() {
         public void run() { readFuel(); handler.postDelayed(this, UPDATE_INTERVAL); }
@@ -96,6 +111,9 @@ public class FloatingFuelService extends Service {
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+
+        // Подписываемся на изменения конфигурации (тема)
+        registerComponentCallbacks(configCallback);
 
         createFloatingView();
         connectCar();
@@ -199,8 +217,12 @@ public class FloatingFuelService extends Service {
     private void updateFuelText(float fuel, boolean low) {
         if (fuelText == null) return;
         handler.post(() -> {
-            int liters = (int) fuel;
-            fuelText.setText(liters + " " + getLiterWord(liters));
+            if (fuel < 0) {
+                fuelText.setText("-- литров");
+            } else {
+                int liters = (int) fuel;
+                fuelText.setText(liters + " " + getLiterWord(liters));
+            }
             int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
             fuelText.setTextColor(color);
             if (iconView != null) iconView.setColorFilter(color);
@@ -225,19 +247,11 @@ public class FloatingFuelService extends Service {
         return "литров";
     }
 
-    /**
-     * Возвращает true, если текст должен быть ТЁМНЫМ (чёрным).
-     * Логика зависит от выбора темы пользователем:
-     *   - Авто  → по системе (UI_MODE_NIGHT)
-     *   - День  → всегда чёрный
-     *   - Ночь  → всегда белый
-     */
     private boolean isDarkText() {
         int theme = settings.getTheme();
-        if (theme == SettingsManager.THEME_DAY) return true;   // День → чёрный
-        if (theme == SettingsManager.THEME_NIGHT) return false; // Ночь → белый
+        if (theme == SettingsManager.THEME_DAY) return true;
+        if (theme == SettingsManager.THEME_NIGHT) return false;
 
-        // Авто → по системному флагу
         int m = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         return m != Configuration.UI_MODE_NIGHT_YES;
     }
@@ -284,14 +298,22 @@ public class FloatingFuelService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (floatingView != null) {
             applySizes();
+            // Обновляем цвет мгновенно (используем последнее значение топлива)
             updateFuelText(lastFuel, lastLow);
         }
+
+        // П2: если пришёл запрос на обновление топлива — читаем сразу
+        if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
+            readFuel();
+        }
+
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        unregisterComponentCallbacks(configCallback);
         handler.removeCallbacks(updateTask);
         handler.removeCallbacks(visibilityTask);
         if (floatingView != null && windowManager != null) {
