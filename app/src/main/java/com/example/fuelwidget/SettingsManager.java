@@ -14,6 +14,7 @@ public class SettingsManager {
     private static final String KEY_FONT_SIZE = "font_size";
     private static final String KEY_ICON_SIZE = "icon_size";
     private static final String KEY_FONT_WEIGHT = "font_weight";
+    private static final String KEY_THEME = "theme";
     private static final String KEY_HIDDEN_APPS = "hidden_apps";
     private static final String KEY_POS_X = "pos_x";
     private static final String KEY_POS_Y = "pos_y";
@@ -22,6 +23,7 @@ public class SettingsManager {
     public static final int DEFAULT_FONT_SIZE = 16;
     public static final int DEFAULT_ICON_SIZE = 20;
     public static final int DEFAULT_FONT_WEIGHT = 400;
+    public static final int DEFAULT_THEME = 0; // 0 = Авто
 
     public static final int MIN_WINDOW_SIZE = 20;
     public static final int MAX_WINDOW_SIZE = 100;
@@ -30,10 +32,16 @@ public class SettingsManager {
     public static final int MIN_ICON_SIZE = 10;
     public static final int MAX_ICON_SIZE = 60;
 
-    // Вес шрифта: 100 (тонкий) ... 900 (жирный), шаг 50
     public static final int MIN_FONT_WEIGHT = 100;
     public static final int MAX_FONT_WEIGHT = 900;
     public static final int FONT_WEIGHT_STEP = 50;
+
+    // Тема: 0 = Авто, 1 = День, 2 = Ночь
+    public static final int THEME_AUTO = 0;
+    public static final int THEME_DAY = 1;
+    public static final int THEME_NIGHT = 2;
+    public static final int THEME_MIN = 0;
+    public static final int THEME_MAX = 2;
 
     private final SharedPreferences prefs;
 
@@ -52,6 +60,9 @@ public class SettingsManager {
 
     public int getFontWeight() { return prefs.getInt(KEY_FONT_WEIGHT, DEFAULT_FONT_WEIGHT); }
     public void setFontWeight(int weight) { prefs.edit().putInt(KEY_FONT_WEIGHT, weight).apply(); }
+
+    public int getTheme() { return prefs.getInt(KEY_THEME, DEFAULT_THEME); }
+    public void setTheme(int theme) { prefs.edit().putInt(KEY_THEME, theme).apply(); }
 
     public Set<String> getHiddenApps() {
         return new HashSet<>(prefs.getStringSet(KEY_HIDDEN_APPS, new HashSet<String>()));
