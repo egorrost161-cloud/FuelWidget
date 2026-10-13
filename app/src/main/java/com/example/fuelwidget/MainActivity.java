@@ -49,11 +49,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_app_list).setOnClickListener(v ->
                 startActivity(new Intent(this, AppListActivity.class)));
 
-        findViewById(R.id.btn_usage_access).setOnClickListener(v -> {
-            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
-            Toast.makeText(this, "Найдите Fuel и включите доступ", Toast.LENGTH_LONG).show();
-        });
-
         findViewById(R.id.btn_reset).setOnClickListener(v -> {
             settings.resetAll();
             updateLabels();
@@ -67,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // П2: при возврате в приложение — просим сервис обновить топливо
         Intent i = new Intent(this, FloatingFuelService.class);
         i.setAction(FloatingFuelService.ACTION_REFRESH);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
