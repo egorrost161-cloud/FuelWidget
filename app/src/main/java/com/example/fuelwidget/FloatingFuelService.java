@@ -32,7 +32,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.res.ResourcesCompat;
 
 import java.util.Set;
 
@@ -62,8 +61,6 @@ public class FloatingFuelService extends Service {
 
     private float lastFuel = -1f;
     private boolean lastLow = false;
-
-    private Typeface robotoFlex;
 
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
@@ -109,12 +106,6 @@ public class FloatingFuelService extends Service {
                 startForeground(1, notification);
             }
         } catch (Exception ignored) {}
-
-        try {
-            robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
-        } catch (Exception e) {
-            robotoFlex = null;
-        }
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
@@ -191,24 +182,37 @@ public class FloatingFuelService extends Service {
 
         float density = getResources().getDisplayMetrics().density;
 
+        // Размер шрифта
         fuelText.setTextSize(settings.getFontSize());
 
-        if (robotoFlex != null) {
-            fuelText.setTypeface(robotoFlex);
-        } else {
-            fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-        }
+        // Применяем шрифт с вариативным весом
+        fuelText.setTypeface(getTypeface());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            fuelText.getPaint().setFontFeatureSettings(
-                    "'wght' " + settings.getFontWeight());
-        }
-        fuelText.invalidate();
-
+        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
+    }
+
+    /**
+     * Загружает Roboto Flex из assets/fonts/ и применяет вариативный вес 'wght'.
+     * Работает плавно: вес от 100 до 900.
+     */
+    private Typeface getTypeface() {
+        int weight = settings.getFontWeight();
+        try {
+            Typeface.Builder builder = new Typeface.Builder(
+                    getAssets(),
+                    "fonts/roboto_flex.ttf"
+            );
+            builder.setFontVariationSettings("'wght' " + weight);
+            builder.setFallback("sans-serif");
+            return builder.build();
+        } catch (Exception e) {
+            // Fallback, если что-то не так
+            return Typeface.create("sans-serif", weight);
+        }
     }
 
     private void connectCar() {
