@@ -1,5 +1,7 @@
 package com.example.fuelwidget;
 
+import android.app.AppOpsManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -13,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class MainActivity extends AppCompatActivity {
 
     private static final int OVERLAY_PERMISSION_REQ = 1001;
+    private static final int USAGE_PERMISSION_REQ = 1002;
 
     private SettingsManager settings;
     private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight, txtTheme;
@@ -58,7 +61,50 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
         });
 
-        checkOverlay();
+        // Поочерёдная проверка разрешений
+        checkOverlayThenUsage();
+    }
+
+    /**
+     * 1. Проверяем оверлей → если нет, открываем настройки.
+     * 2. Проверяем usage stats → если нет, открываем настройки.
+     * 3. Если оба есть — запускаем сервис.
+     */
+    private void checkOverlayThenUsage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(i, OVERLAY_PERMISSION_REQ);
+                return;
+            }
+        }
+        // Оверлей есть — проверяем usage stats
+        if (!hasUsageStatsPermission()) {
+            Toast.makeText(this, "Разрешите доступ к данным об использовании для Fuel",
+                    Toast.LENGTH_LONG).show();
+            startActivityForResult(
+                    new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS),
+                    USAGE_PERMISSION_REQ);
+            return;
+        }
+        // Оба разрешения есть — запускаем
+        applySettings();
+    }
+
+    private boolean hasUsageStatsPermission() {
+        try {
+            AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+            if (appOps == null) return false;
+            int mode = appOps.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(),
+                    getPackageName()
+            );
+            return mode == AppOpsManager.MODE_ALLOWED;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void changeWindow(int d) {
@@ -120,22 +166,21 @@ public class MainActivity extends AppCompatActivity {
         else startService(i);
     }
 
-    private void checkOverlay() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName()));
-                startActivityForResult(i, OVERLAY_PERMISSION_REQ);
-            } else applySettings();
-        } else applySettings();
-    }
-
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+
         if (req == OVERLAY_PERMISSION_REQ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+            // Вернулись из настроек оверлея — проверяем снова всю цепочку
+            checkOverlayThenUsage();
+        } else if (req == USAGE_PERMISSION_REQ) {
+            // Вернулись из настроек usage stats — проверяем снова
+            if (hasUsageStatsPermission()) {
                 applySettings();
+                Toast.makeText(this, "Все разрешения получены", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Доступ не выдан. Разрешите вручную в настройках.",
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
