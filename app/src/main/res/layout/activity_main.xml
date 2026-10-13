@@ -232,15 +232,6 @@
             android:textSize="16sp" />
 
         <Button
-            android:id="@+id/btn_usage_access"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Разрешить доступ к данным об использовании"
-            android:textSize="14sp"
-            android:backgroundTint="#1976D2" />
-
-        <Button
             android:id="@+id/btn_reset"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
