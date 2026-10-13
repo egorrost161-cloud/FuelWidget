@@ -2,23 +2,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Разрешения для CAN-шины -->
     <uses-permission android:name="android.car.permission.CAR_INFO" />
     <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
     <uses-permission android:name="android.car.permission.CAR_ENERGY" />
 
+    <!-- Плавающее окно -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Автозапуск при включении магнитолы -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Определение активного приложения (для скрытия окна) -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
     <application
         android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="Fuel"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
 
+        <!-- Главный экран — настройки -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -28,16 +37,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Экран выбора приложений -->
         <activity
             android:name=".AppListActivity"
             android:exported="false"
             android:label="Приложения для скрытия" />
 
+        <!-- Сервис плавающего окна -->
         <service
             android:name=".FloatingFuelService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- Автозапуск сервиса при загрузке -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -48,4 +60,5 @@
         </receiver>
 
     </application>
+
 </manifest>
