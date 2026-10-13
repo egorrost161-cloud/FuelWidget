@@ -63,7 +63,7 @@ public class FloatingFuelService extends Service {
     private float lastFuel = -1f;
     private boolean lastLow = false;
 
-    private Typeface robotoFlex; // Кэшированный вариативный шрифт
+    private Typeface robotoFlex;
 
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
@@ -102,15 +102,14 @@ public class FloatingFuelService extends Service {
             createNotificationChannel();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Notification notification = new Notification.Builder(this, "fuel_channel")
-                        .setContentTitle("Fuel")
-                        .setContentText("Отслеживание топлива")
+                        .setContentTitle("Топливо")
+                        .setContentText("Отслеживание уровня топлива")
                         .setSmallIcon(android.R.drawable.ic_menu_info_details)
                         .build();
                 startForeground(1, notification);
             }
         } catch (Exception ignored) {}
 
-        // Загружаем вариативный шрифт один раз
         try {
             robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
         } catch (Exception e) {
@@ -187,34 +186,25 @@ public class FloatingFuelService extends Service {
         windowManager.addView(floatingView, params);
     }
 
-    /**
-     * Применяет размер шрифта, размер иконки и ПЛАВНЫЙ вес шрифта.
-     * Вес применяется через Paint.setFontFeatureSettings("'wght' N") —
-     * это работает для вариативных шрифтов (Roboto Flex).
-     */
     private void applySizes() {
         if (fuelText == null || iconView == null) return;
 
         float density = getResources().getDisplayMetrics().density;
 
-        // Размер шрифта
         fuelText.setTextSize(settings.getFontSize());
 
-        // Применяем шрифт
         if (robotoFlex != null) {
             fuelText.setTypeface(robotoFlex);
         } else {
             fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         }
 
-        // Плавный вес через вариативную ось 'wght' (только API 21+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             fuelText.getPaint().setFontFeatureSettings(
                     "'wght' " + settings.getFontWeight());
         }
         fuelText.invalidate();
 
-        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
@@ -318,7 +308,7 @@ public class FloatingFuelService extends Service {
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel ch = new NotificationChannel(
-                    "fuel_channel", "Fuel Service", NotificationManager.IMPORTANCE_LOW);
+                    "fuel_channel", "Топливо", NotificationManager.IMPORTANCE_LOW);
             NotificationManager m = getSystemService(NotificationManager.class);
             if (m != null) m.createNotificationChannel(ch);
         }
