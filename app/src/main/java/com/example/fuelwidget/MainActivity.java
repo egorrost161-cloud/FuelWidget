@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int USAGE_PERMISSION_REQ = 1002;
 
     private SettingsManager settings;
-    private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight, txtTheme;
+    private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight, txtTheme, txtLock;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         txtIconSize = findViewById(R.id.txt_icon_size);
         txtFontWeight = findViewById(R.id.txt_font_weight);
         txtTheme = findViewById(R.id.txt_theme);
+        txtLock = findViewById(R.id.txt_lock);
 
         updateLabels();
 
@@ -45,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_weight_plus).setOnClickListener(v -> changeWeight(+1));
         findViewById(R.id.btn_theme_minus).setOnClickListener(v -> changeTheme(-1));
         findViewById(R.id.btn_theme_plus).setOnClickListener(v -> changeTheme(+1));
+        findViewById(R.id.btn_lock_minus).setOnClickListener(v -> setLock(false));
+        findViewById(R.id.btn_lock_plus).setOnClickListener(v -> setLock(true));
 
         findViewById(R.id.btn_app_list).setOnClickListener(v ->
                 startActivity(new Intent(this, AppListActivity.class)));
@@ -139,12 +142,19 @@ public class MainActivity extends AppCompatActivity {
         settings.setTheme(t); updateLabels(); applySettings();
     }
 
+    private void setLock(boolean locked) {
+        settings.setLocked(locked);
+        updateLabels();
+        applySettings();
+    }
+
     private void updateLabels() {
         txtWindowSize.setText(settings.getWindowSize() + " dp");
         txtFontSize.setText(settings.getFontSize() + " sp");
         txtIconSize.setText(settings.getIconSize() + " dp");
         txtFontWeight.setText(String.valueOf(settings.getFontWeight()));
         txtTheme.setText(themeName(settings.getTheme()));
+        txtLock.setText(settings.isLocked() ? "Заблокирован" : "Разблокирован");
     }
 
     private String themeName(int t) {
