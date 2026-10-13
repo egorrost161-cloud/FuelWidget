@@ -169,11 +169,8 @@ public class FloatingFuelService extends Service {
         iconView.setLayoutParams(lp);
     }
 
-    // Применяем вес шрифта: 100-900
     private Typeface getTypeface() {
-        int weight = settings.getFontWeight();
-        // Typeface.create() принимает вес 100-900, система округлит до ближайшего доступного
-        return Typeface.create("sans-serif", weight);
+        return Typeface.create("sans-serif", settings.getFontWeight());
     }
 
     private void connectCar() {
@@ -204,7 +201,7 @@ public class FloatingFuelService extends Service {
         handler.post(() -> {
             int liters = (int) fuel;
             fuelText.setText(liters + " " + getLiterWord(liters));
-            int color = low ? Color.RED : (isNightMode() ? Color.WHITE : Color.BLACK);
+            int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
             fuelText.setTextColor(color);
             if (iconView != null) iconView.setColorFilter(color);
         });
@@ -214,7 +211,7 @@ public class FloatingFuelService extends Service {
         handler.post(() -> {
             if (fuelText != null) {
                 fuelText.setText("-- литров");
-                int color = isNightMode() ? Color.WHITE : Color.BLACK;
+                int color = isDarkText() ? Color.BLACK : Color.WHITE;
                 fuelText.setTextColor(color);
                 if (iconView != null) iconView.setColorFilter(color);
             }
@@ -228,9 +225,21 @@ public class FloatingFuelService extends Service {
         return "литров";
     }
 
-    private boolean isNightMode() {
+    /**
+     * Возвращает true, если текст должен быть ТЁМНЫМ (чёрным).
+     * Логика зависит от выбора темы пользователем:
+     *   - Авто  → по системе (UI_MODE_NIGHT)
+     *   - День  → всегда чёрный
+     *   - Ночь  → всегда белый
+     */
+    private boolean isDarkText() {
+        int theme = settings.getTheme();
+        if (theme == SettingsManager.THEME_DAY) return true;   // День → чёрный
+        if (theme == SettingsManager.THEME_NIGHT) return false; // Ночь → белый
+
+        // Авто → по системному флагу
         int m = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        return m == Configuration.UI_MODE_NIGHT_YES;
+        return m != Configuration.UI_MODE_NIGHT_YES;
     }
 
     private void checkActiveApp() {
