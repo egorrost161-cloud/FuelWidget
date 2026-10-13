@@ -15,7 +15,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int OVERLAY_PERMISSION_REQ = 1001;
 
     private SettingsManager settings;
-    private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight;
+    private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight, txtTheme;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
         txtFontSize = findViewById(R.id.txt_font_size);
         txtIconSize = findViewById(R.id.txt_icon_size);
         txtFontWeight = findViewById(R.id.txt_font_weight);
+        txtTheme = findViewById(R.id.txt_theme);
 
         updateLabels();
 
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_icon_plus).setOnClickListener(v -> changeIcon(+1));
         findViewById(R.id.btn_weight_minus).setOnClickListener(v -> changeWeight(-1));
         findViewById(R.id.btn_weight_plus).setOnClickListener(v -> changeWeight(+1));
+        findViewById(R.id.btn_theme_minus).setOnClickListener(v -> changeTheme(-1));
+        findViewById(R.id.btn_theme_plus).setOnClickListener(v -> changeTheme(+1));
 
         findViewById(R.id.btn_app_list).setOnClickListener(v ->
                 startActivity(new Intent(this, AppListActivity.class)));
@@ -79,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Меняем вес на шаг 50
     private void changeWeight(int d) {
         int step = SettingsManager.FONT_WEIGHT_STEP;
         int w = settings.getFontWeight() + (d * step);
@@ -88,11 +90,28 @@ public class MainActivity extends AppCompatActivity {
         settings.setFontWeight(w); updateLabels(); applySettings();
     }
 
+    private void changeTheme(int d) {
+        int t = settings.getTheme() + d;
+        if (t < SettingsManager.THEME_MIN) t = SettingsManager.THEME_MIN;
+        if (t > SettingsManager.THEME_MAX) t = SettingsManager.THEME_MAX;
+        settings.setTheme(t); updateLabels(); applySettings();
+    }
+
     private void updateLabels() {
         txtWindowSize.setText(settings.getWindowSize() + " dp");
         txtFontSize.setText(settings.getFontSize() + " sp");
         txtIconSize.setText(settings.getIconSize() + " dp");
         txtFontWeight.setText(String.valueOf(settings.getFontWeight()));
+        txtTheme.setText(themeName(settings.getTheme()));
+    }
+
+    private String themeName(int t) {
+        switch (t) {
+            case SettingsManager.THEME_AUTO: return "Авто";
+            case SettingsManager.THEME_DAY: return "День";
+            case SettingsManager.THEME_NIGHT: return "Ночь";
+            default: return "Авто";
+        }
     }
 
     private void applySettings() {
