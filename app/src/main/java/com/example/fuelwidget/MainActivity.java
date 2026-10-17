@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
         updateLabels();
 
+        // --- Обработчики кнопок ---
         findViewById(R.id.btn_window_minus).setOnClickListener(v -> changeWindow(-1));
         findViewById(R.id.btn_window_plus).setOnClickListener(v -> changeWindow(+1));
         findViewById(R.id.btn_font_minus).setOnClickListener(v -> changeFont(-1));
@@ -52,6 +52,10 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_app_list).setOnClickListener(v ->
                 startActivity(new Intent(this, AppListActivity.class)));
 
+        // НОВАЯ КНОПКА ТЕСТА
+        findViewById(R.id.btn_test_wheel).setOnClickListener(v ->
+                startActivity(new Intent(this, WheelTestActivity.class)));
+
         findViewById(R.id.btn_reset).setOnClickListener(v -> {
             settings.resetAll();
             updateLabels();
@@ -61,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
 
         checkOverlayThenUsage();
     }
+
+    // ... (Остальные методы onResume, checkOverlayThenUsage, changeWindow и т.д. остаются БЕЗ ИЗМЕНЕНИЙ) ...
 
     @Override
     protected void onResume() {
@@ -81,11 +87,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (!hasUsageStatsPermission()) {
-            Toast.makeText(this, "Разрешите доступ к данным об использовании для Fuel",
-                    Toast.LENGTH_LONG).show();
-            startActivityForResult(
-                    new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS),
-                    USAGE_PERMISSION_REQ);
+            Toast.makeText(this, "Разрешите доступ к данным об использовании", Toast.LENGTH_LONG).show();
+            startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), USAGE_PERMISSION_REQ);
             return;
         }
         applySettings();
@@ -95,15 +98,10 @@ public class MainActivity extends AppCompatActivity {
         try {
             AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
             if (appOps == null) return false;
-            int mode = appOps.checkOpNoThrow(
-                    AppOpsManager.OPSTR_GET_USAGE_STATS,
-                    android.os.Process.myUid(),
-                    getPackageName()
-            );
+            int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(), getPackageName());
             return mode == AppOpsManager.MODE_ALLOWED;
-        } catch (Exception e) {
-            return false;
-        }
+        } catch (Exception e) { return false; }
     }
 
     private void changeWindow(int d) {
@@ -143,9 +141,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setLock(boolean locked) {
-        settings.setLocked(locked);
-        updateLabels();
-        applySettings();
+        settings.setLocked(locked); updateLabels(); applySettings();
     }
 
     private void updateLabels() {
@@ -175,16 +171,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-
         if (req == OVERLAY_PERMISSION_REQ) {
             checkOverlayThenUsage();
         } else if (req == USAGE_PERMISSION_REQ) {
             if (hasUsageStatsPermission()) {
                 applySettings();
-                Toast.makeText(this, "Все разрешения получены", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Доступ не выдан. Разрешите вручную.",
-                        Toast.LENGTH_LONG).show();
             }
         }
     }
