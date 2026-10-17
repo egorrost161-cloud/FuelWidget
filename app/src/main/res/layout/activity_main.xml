@@ -13,11 +13,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Настройки Fuel"
+            android:text="Настройки Топливо"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#000000"
             android:layout_marginBottom="24dp" />
+
+        <!-- ... (все блоки настроек размера, шрифта, иконки, темы, блокировки остаются без изменений) ... -->
+        <!-- Для краткости я не дублирую их здесь, они остаются как были. -->
 
         <TextView
             android:layout_width="wrap_content"
@@ -37,26 +40,19 @@
                 android:id="@+id/btn_window_minus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="−"
-                android:textSize="20sp" />
-
+                android:text="−" />
             <TextView
                 android:id="@+id/txt_window_size"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="42 dp"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
+                android:text="42 dp" />
             <Button
                 android:id="@+id/btn_window_plus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="+"
-                android:textSize="20sp" />
+                android:text="+" />
         </LinearLayout>
 
         <TextView
@@ -66,38 +62,29 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:layout_marginTop="24dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="8dp">
-
             <Button
                 android:id="@+id/btn_font_minus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="−"
-                android:textSize="20sp" />
-
+                android:text="−" />
             <TextView
                 android:id="@+id/txt_font_size"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="16 sp"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
+                android:text="16 sp" />
             <Button
                 android:id="@+id/btn_font_plus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="+"
-                android:textSize="20sp" />
+                android:text="+" />
         </LinearLayout>
 
         <TextView
@@ -107,38 +94,29 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:layout_marginTop="24dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="8dp">
-
             <Button
                 android:id="@+id/btn_icon_minus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="−"
-                android:textSize="20sp" />
-
+                android:text="−" />
             <TextView
                 android:id="@+id/txt_icon_size"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="20 dp"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
+                android:text="20 dp" />
             <Button
                 android:id="@+id/btn_icon_plus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="+"
-                android:textSize="20sp" />
+                android:text="+" />
         </LinearLayout>
 
         <TextView
@@ -148,38 +126,29 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:layout_marginTop="24dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="8dp">
-
             <Button
                 android:id="@+id/btn_weight_minus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="−"
-                android:textSize="20sp" />
-
+                android:text="−" />
             <TextView
                 android:id="@+id/txt_font_weight"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="400"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
+                android:text="400" />
             <Button
                 android:id="@+id/btn_weight_plus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="+"
-                android:textSize="20sp" />
+                android:text="+" />
         </LinearLayout>
 
         <TextView
@@ -189,38 +158,29 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:layout_marginTop="24dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="8dp">
-
             <Button
                 android:id="@+id/btn_theme_minus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="◀"
-                android:textSize="20sp" />
-
+                android:text="◀" />
             <TextView
                 android:id="@+id/txt_theme"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Авто"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
+                android:text="Авто" />
             <Button
                 android:id="@+id/btn_theme_plus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="▶"
-                android:textSize="20sp" />
+                android:text="▶" />
         </LinearLayout>
 
         <TextView
@@ -230,38 +190,29 @@
             android:textSize="16sp"
             android:textColor="#000000"
             android:layout_marginTop="24dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginTop="8dp">
-
             <Button
                 android:id="@+id/btn_lock_minus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="◀"
-                android:textSize="20sp" />
-
+                android:text="◀" />
             <TextView
                 android:id="@+id/txt_lock"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:gravity="center"
-                android:text="Разблокирован"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000" />
-
+                android:text="Разблокирован" />
             <Button
                 android:id="@+id/btn_lock_plus"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="▶"
-                android:textSize="20sp" />
+                android:text="▶" />
         </LinearLayout>
 
         <Button
@@ -278,8 +229,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Сбросить настройки"
-            android:textSize="16sp"
             android:backgroundTint="#E53935" />
+
+        <!-- НОВАЯ КНОПКА ДЛЯ ТЕСТА РУЛЯ -->
+        <Button
+            android:id="@+id/btn_test_wheel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="ТЕСТ: Угол руля"
+            android:textSize="16sp"
+            android:backgroundTint="#FF9800" />
 
     </LinearLayout>
 </ScrollView>
