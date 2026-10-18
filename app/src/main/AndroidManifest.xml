@@ -25,7 +25,6 @@
         </activity>
 
         <activity android:name=".AppListActivity" android:exported="false" android:label="Приложения для скрытия" />
-        <activity android:name=".WheelTestActivity" android:exported="false" android:label="Тест руля" />
 
         <service android:name=".FloatingFuelService" android:exported="false" android:foregroundServiceType="dataSync" />
 
