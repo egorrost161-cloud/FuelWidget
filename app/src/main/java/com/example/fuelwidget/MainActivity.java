@@ -3,6 +3,7 @@ package com.example.fuelwidget;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
 
         settings = new SettingsManager(this);
 
-        // Инициализация View
         layoutPermissions = findViewById(R.id.layout_permissions);
         layoutSettings = findViewById(R.id.layout_settings);
         layoutActions = findViewById(R.id.layout_actions);
@@ -44,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
 
         updateLabels();
 
-        // Обработчики настроек
         findViewById(R.id.btn_window_minus).setOnClickListener(v -> changeWindow(-1));
         findViewById(R.id.btn_window_plus).setOnClickListener(v -> changeWindow(+1));
         findViewById(R.id.btn_font_minus).setOnClickListener(v -> changeFont(-1));
@@ -68,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
         });
 
-        // Обработчики кнопок разрешений
         findViewById(R.id.btn_perm_overlay).setOnClickListener(v -> {
             Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
@@ -88,17 +86,13 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_continue).setOnClickListener(v -> checkAllPermissions());
 
-        // Проверяем разрешения при старте
         checkAllPermissions();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Intent i = new Intent(this, FloatingFuelService.class);
-        i.setAction(FloatingFuelService.ACTION_REFRESH);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
-        else startService(i);
+        applySettings();
     }
 
     private void checkAllPermissions() {
@@ -196,6 +190,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void applySettings() {
+        // ЗАЩИТА ДЛЯ ТЕЛЕФОНА: если это не автомобильная система, не запускаем сервис
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            return; // На телефоне просто не запускаем сервис, чтобы не было краша
+        }
+
         Intent i = new Intent(this, FloatingFuelService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
         else startService(i);
