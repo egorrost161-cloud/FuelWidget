@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SettingsManager settings;
     private TextView txtWindowSize, txtFontSize, txtIconSize, txtFontWeight, txtTheme, txtLock;
-    private LinearLayout cardPermissions, cardSettings, cardActions;
+    private LinearLayout layoutPermissions, layoutSettings, layoutActions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,9 +31,9 @@ public class MainActivity extends AppCompatActivity {
         settings = new SettingsManager(this);
 
         // Инициализация View
-        cardPermissions = findViewById(R.id.card_permissions);
-        cardSettings = findViewById(R.id.card_settings);
-        cardActions = findViewById(R.id.card_actions);
+        layoutPermissions = findViewById(R.id.layout_permissions);
+        layoutSettings = findViewById(R.id.layout_settings);
+        layoutActions = findViewById(R.id.layout_actions);
 
         txtWindowSize = findViewById(R.id.txt_window_size);
         txtFontSize = findViewById(R.id.txt_font_size);
@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
 
         updateLabels();
 
-        // Обработчики кнопок настроек
+        // Обработчики настроек
         findViewById(R.id.btn_window_minus).setOnClickListener(v -> changeWindow(-1));
         findViewById(R.id.btn_window_plus).setOnClickListener(v -> changeWindow(+1));
         findViewById(R.id.btn_font_minus).setOnClickListener(v -> changeFont(-1));
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
         });
 
-        // Обработчики блока разрешений
+        // Обработчики кнопок разрешений
         findViewById(R.id.btn_perm_overlay).setOnClickListener(v -> {
             Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
@@ -80,15 +80,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btn_perm_carinfo).setOnClickListener(v -> {
-            // Открываем настройки приложения, где пользователь сможет найти "Car information"
             Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
             intent.setData(Uri.parse("package:" + getPackageName()));
             startActivity(intent);
-            Toast.makeText(this, "Найдите здесь 'Car information' и разрешите", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Найдите здесь 'Car information'", Toast.LENGTH_LONG).show();
         });
 
         findViewById(R.id.btn_continue).setOnClickListener(v -> checkAllPermissions());
 
+        // Проверяем разрешения при старте
         checkAllPermissions();
     }
 
@@ -109,16 +109,14 @@ public class MainActivity extends AppCompatActivity {
         boolean hasUsage = hasUsageStatsPermission();
 
         if (hasOverlay && hasUsage) {
-            // Все разрешения есть — показываем настройки
-            cardPermissions.setVisibility(View.GONE);
-            cardSettings.setVisibility(View.VISIBLE);
-            cardActions.setVisibility(View.VISIBLE);
+            layoutPermissions.setVisibility(View.GONE);
+            layoutSettings.setVisibility(View.VISIBLE);
+            layoutActions.setVisibility(View.VISIBLE);
             applySettings();
         } else {
-            // Разрешений нет — показываем экран запроса
-            cardPermissions.setVisibility(View.VISIBLE);
-            cardSettings.setVisibility(View.GONE);
-            cardActions.setVisibility(View.GONE);
+            layoutPermissions.setVisibility(View.VISIBLE);
+            layoutSettings.setVisibility(View.GONE);
+            layoutActions.setVisibility(View.GONE);
         }
     }
 
@@ -136,8 +134,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     }
-
-    // ... (Методы changeWindow, changeFont, changeIcon, changeWeight, changeTheme, setLock, updateLabels, themeName, applySettings остаются БЕЗ ИЗМЕНЕНИЙ, как в предыдущей версии) ...
 
     private void changeWindow(int d) {
         int s = settings.getWindowSize() + d;
@@ -208,7 +204,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
-        // После возвращения из настроек проверяем разрешения заново
         checkAllPermissions();
     }
 }
