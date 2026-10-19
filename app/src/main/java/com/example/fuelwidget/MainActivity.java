@@ -3,7 +3,6 @@ package com.example.fuelwidget;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,72 +26,87 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        try {
+            setContentView(R.layout.activity_main);
 
-        settings = new SettingsManager(this);
+            settings = new SettingsManager(this);
 
-        layoutPermissions = findViewById(R.id.layout_permissions);
-        layoutSettings = findViewById(R.id.layout_settings);
-        layoutActions = findViewById(R.id.layout_actions);
+            layoutPermissions = findViewById(R.id.layout_permissions);
+            layoutSettings = findViewById(R.id.layout_settings);
+            layoutActions = findViewById(R.id.layout_actions);
 
-        txtWindowSize = findViewById(R.id.txt_window_size);
-        txtFontSize = findViewById(R.id.txt_font_size);
-        txtIconSize = findViewById(R.id.txt_icon_size);
-        txtFontWeight = findViewById(R.id.txt_font_weight);
-        txtTheme = findViewById(R.id.txt_theme);
-        txtLock = findViewById(R.id.txt_lock);
+            txtWindowSize = findViewById(R.id.txt_window_size);
+            txtFontSize = findViewById(R.id.txt_font_size);
+            txtIconSize = findViewById(R.id.txt_icon_size);
+            txtFontWeight = findViewById(R.id.txt_font_weight);
+            txtTheme = findViewById(R.id.txt_theme);
+            txtLock = findViewById(R.id.txt_lock);
 
-        updateLabels();
-
-        findViewById(R.id.btn_window_minus).setOnClickListener(v -> changeWindow(-1));
-        findViewById(R.id.btn_window_plus).setOnClickListener(v -> changeWindow(+1));
-        findViewById(R.id.btn_font_minus).setOnClickListener(v -> changeFont(-1));
-        findViewById(R.id.btn_font_plus).setOnClickListener(v -> changeFont(+1));
-        findViewById(R.id.btn_icon_minus).setOnClickListener(v -> changeIcon(-1));
-        findViewById(R.id.btn_icon_plus).setOnClickListener(v -> changeIcon(+1));
-        findViewById(R.id.btn_weight_minus).setOnClickListener(v -> changeWeight(-1));
-        findViewById(R.id.btn_weight_plus).setOnClickListener(v -> changeWeight(+1));
-        findViewById(R.id.btn_theme_minus).setOnClickListener(v -> changeTheme(-1));
-        findViewById(R.id.btn_theme_plus).setOnClickListener(v -> changeTheme(+1));
-        findViewById(R.id.btn_lock_minus).setOnClickListener(v -> setLock(false));
-        findViewById(R.id.btn_lock_plus).setOnClickListener(v -> setLock(true));
-
-        findViewById(R.id.btn_app_list).setOnClickListener(v ->
-                startActivity(new Intent(this, AppListActivity.class)));
-
-        findViewById(R.id.btn_reset).setOnClickListener(v -> {
-            settings.resetAll();
             updateLabels();
-            applySettings();
-            Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
-        });
 
-        findViewById(R.id.btn_perm_overlay).setOnClickListener(v -> {
-            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(i, OVERLAY_PERMISSION_REQ);
-        });
+            findViewById(R.id.btn_window_minus).setOnClickListener(v -> changeWindow(-1));
+            findViewById(R.id.btn_window_plus).setOnClickListener(v -> changeWindow(+1));
+            findViewById(R.id.btn_font_minus).setOnClickListener(v -> changeFont(-1));
+            findViewById(R.id.btn_font_plus).setOnClickListener(v -> changeFont(+1));
+            findViewById(R.id.btn_icon_minus).setOnClickListener(v -> changeIcon(-1));
+            findViewById(R.id.btn_icon_plus).setOnClickListener(v -> changeIcon(+1));
+            findViewById(R.id.btn_weight_minus).setOnClickListener(v -> changeWeight(-1));
+            findViewById(R.id.btn_weight_plus).setOnClickListener(v -> changeWeight(+1));
+            findViewById(R.id.btn_theme_minus).setOnClickListener(v -> changeTheme(-1));
+            findViewById(R.id.btn_theme_plus).setOnClickListener(v -> changeTheme(+1));
+            findViewById(R.id.btn_lock_minus).setOnClickListener(v -> setLock(false));
+            findViewById(R.id.btn_lock_plus).setOnClickListener(v -> setLock(true));
 
-        findViewById(R.id.btn_perm_usage).setOnClickListener(v -> {
-            startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), USAGE_PERMISSION_REQ);
-        });
+            findViewById(R.id.btn_app_list).setOnClickListener(v ->
+                    startActivity(new Intent(this, AppListActivity.class)));
 
-        findViewById(R.id.btn_perm_carinfo).setOnClickListener(v -> {
-            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-            Toast.makeText(this, "Найдите здесь 'Car information'", Toast.LENGTH_LONG).show();
-        });
+            findViewById(R.id.btn_reset).setOnClickListener(v -> {
+                settings.resetAll();
+                updateLabels();
+                Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
+            });
 
-        findViewById(R.id.btn_continue).setOnClickListener(v -> checkAllPermissions());
+            findViewById(R.id.btn_perm_overlay).setOnClickListener(v -> {
+                Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + getPackageName()));
+                startActivityForResult(i, OVERLAY_PERMISSION_REQ);
+            });
 
-        checkAllPermissions();
+            findViewById(R.id.btn_perm_usage).setOnClickListener(v -> {
+                startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), USAGE_PERMISSION_REQ);
+            });
+
+            findViewById(R.id.btn_perm_carinfo).setOnClickListener(v -> {
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+                Toast.makeText(this, "Найдите здесь 'Car information'", Toast.LENGTH_LONG).show();
+            });
+
+            findViewById(R.id.btn_continue).setOnClickListener(v -> {
+                checkAllPermissions();
+                startWidgetManually();
+            });
+
+            checkAllPermissions();
+
+        } catch (Throwable e) {
+            Toast.makeText(this, "КРАШ: " + e.toString(), Toast.LENGTH_LONG).show();
+        }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        applySettings();
+    private void startWidgetManually() {
+        try {
+            Intent i = new Intent(this, FloatingFuelService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(i);
+            } else {
+                startService(i);
+            }
+            Toast.makeText(this, "Команда запуска отправлена", Toast.LENGTH_SHORT).show();
+        } catch (Throwable e) {
+            Toast.makeText(this, "Ошибка запуска: " + e.toString(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void checkAllPermissions() {
@@ -106,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
             layoutPermissions.setVisibility(View.GONE);
             layoutSettings.setVisibility(View.VISIBLE);
             layoutActions.setVisibility(View.VISIBLE);
-            applySettings();
         } else {
             layoutPermissions.setVisibility(View.VISIBLE);
             layoutSettings.setVisibility(View.GONE);
@@ -132,21 +145,21 @@ public class MainActivity extends AppCompatActivity {
     private void changeWindow(int d) {
         int s = settings.getWindowSize() + d;
         if (s >= SettingsManager.MIN_WINDOW_SIZE && s <= SettingsManager.MAX_WINDOW_SIZE) {
-            settings.setWindowSize(s); updateLabels(); applySettings();
+            settings.setWindowSize(s); updateLabels();
         }
     }
 
     private void changeFont(int d) {
         int s = settings.getFontSize() + d;
         if (s >= SettingsManager.MIN_FONT_SIZE && s <= SettingsManager.MAX_FONT_SIZE) {
-            settings.setFontSize(s); updateLabels(); applySettings();
+            settings.setFontSize(s); updateLabels();
         }
     }
 
     private void changeIcon(int d) {
         int s = settings.getIconSize() + d;
         if (s >= SettingsManager.MIN_ICON_SIZE && s <= SettingsManager.MAX_ICON_SIZE) {
-            settings.setIconSize(s); updateLabels(); applySettings();
+            settings.setIconSize(s); updateLabels();
         }
     }
 
@@ -155,20 +168,19 @@ public class MainActivity extends AppCompatActivity {
         int w = settings.getFontWeight() + (d * step);
         if (w < SettingsManager.MIN_FONT_WEIGHT) w = SettingsManager.MIN_FONT_WEIGHT;
         if (w > SettingsManager.MAX_FONT_WEIGHT) w = SettingsManager.MAX_FONT_WEIGHT;
-        settings.setFontWeight(w); updateLabels(); applySettings();
+        settings.setFontWeight(w); updateLabels();
     }
 
     private void changeTheme(int d) {
         int t = settings.getTheme() + d;
         if (t < SettingsManager.THEME_MIN) t = SettingsManager.THEME_MIN;
         if (t > SettingsManager.THEME_MAX) t = SettingsManager.THEME_MAX;
-        settings.setTheme(t); updateLabels(); applySettings();
+        settings.setTheme(t); updateLabels();
     }
 
     private void setLock(boolean locked) {
         settings.setLocked(locked);
         updateLabels();
-        applySettings();
     }
 
     private void updateLabels() {
@@ -187,17 +199,6 @@ public class MainActivity extends AppCompatActivity {
             case SettingsManager.THEME_NIGHT: return "Ночь";
             default: return "Авто";
         }
-    }
-
-    private void applySettings() {
-        // ЗАЩИТА ДЛЯ ТЕЛЕФОНА: если это не автомобильная система, не запускаем сервис
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            return; // На телефоне просто не запускаем сервис, чтобы не было краша
-        }
-
-        Intent i = new Intent(this, FloatingFuelService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
-        else startService(i);
     }
 
     @Override
