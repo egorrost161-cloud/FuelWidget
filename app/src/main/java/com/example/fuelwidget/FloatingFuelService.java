@@ -85,7 +85,7 @@ public class FloatingFuelService extends Service {
             try {
                 mSensorManager = (CarSensorManager) mCar.getCarManager(Car.SENSOR_SERVICE);
                 readFuel();
-            } catch (Exception e) { showError(); }
+            } catch (Throwable e) { showError(); }
         }
         public void onServiceDisconnected(ComponentName n) { mSensorManager = null; }
     };
@@ -182,44 +182,25 @@ public class FloatingFuelService extends Service {
 
         float density = getResources().getDisplayMetrics().density;
 
-        // Размер шрифта
         fuelText.setTextSize(settings.getFontSize());
 
-        // Применяем шрифт с вариативным весом
-        fuelText.setTypeface(getTypeface());
+        // Используем стандартный шрифт, если Roboto Flex недоступен
+        try {
+            Typeface tf = Typeface.create("sans-serif", settings.getFontWeight());
+            fuelText.setTypeface(tf);
+        } catch (Throwable ignored) {}
 
-        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
     }
 
-    /**
-     * Загружает Roboto Flex из assets/fonts/ и применяет вариативный вес 'wght'.
-     * Работает плавно: вес от 100 до 900.
-     */
-    private Typeface getTypeface() {
-        int weight = settings.getFontWeight();
-        try {
-            Typeface.Builder builder = new Typeface.Builder(
-                    getAssets(),
-                    "fonts/roboto_flex.ttf"
-            );
-            builder.setFontVariationSettings("'wght' " + weight);
-            builder.setFallback("sans-serif");
-            return builder.build();
-        } catch (Exception e) {
-            // Fallback, если что-то не так
-            return Typeface.create("sans-serif", weight);
-        }
-    }
-
     private void connectCar() {
         try {
             mCar = Car.createCar(this, carConnection);
             if (mCar != null) mCar.connect();
-        } catch (Exception e) { showError(); }
+        } catch (Throwable e) { showError(); }
     }
 
     private void readFuel() {
@@ -235,7 +216,7 @@ public class FloatingFuelService extends Service {
                 return;
             }
             showError();
-        } catch (Exception e) { showError(); }
+        } catch (Throwable e) { showError(); }
     }
 
     private void updateFuelText(float fuel, boolean low) {
