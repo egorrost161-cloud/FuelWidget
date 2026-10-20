@@ -66,35 +66,29 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Сброшено", Toast.LENGTH_SHORT).show();
         });
 
-        findViewById(R.id.btn_perm_overlay).setOnClickListener(v -> {
-            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-            startActivityForResult(i, OVERLAY_PERMISSION_REQ);
-        });
-
-        findViewById(R.id.btn_perm_usage).setOnClickListener(v -> {
-            startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), USAGE_PERMISSION_REQ);
-        });
-
         findViewById(R.id.btn_perm_carinfo).setOnClickListener(v -> {
-            // Это системное разрешение, его нельзя выдать через всплывающее окно. 
-            // Открываем карточку приложения, где пользователь найдет нужный пункт.
             Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
             intent.setData(Uri.parse("package:" + getPackageName()));
             startActivity(intent);
             Toast.makeText(this, "Найдите 'Car information' и включите", Toast.LENGTH_LONG).show();
         });
 
-        findViewById(R.id.btn_continue).setOnClickListener(v -> checkAllPermissions());
+        findViewById(R.id.btn_perm_usage).setOnClickListener(v -> {
+            startActivityForResult(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS), USAGE_PERMISSION_REQ);
+        });
 
-        // Проверяем разрешения при каждом запуске
+        findViewById(R.id.btn_perm_overlay).setOnClickListener(v -> {
+            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(i, OVERLAY_PERMISSION_REQ);
+        });
+
         checkAllPermissions();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Отправляем сигнал сервису на обновление (если он уже запущен)
         applySettings();
     }
 
@@ -109,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
             layoutPermissions.setVisibility(View.GONE);
             layoutSettings.setVisibility(View.VISIBLE);
             layoutActions.setVisibility(View.VISIBLE);
-            applySettings(); // Запускаем виджет, если всё ок
+            applySettings();
         } else {
             layoutPermissions.setVisibility(View.VISIBLE);
             layoutSettings.setVisibility(View.GONE);
@@ -193,13 +187,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void applySettings() {
-        if (!Settings.canDrawOverlays(this)) return; // Защита
         try {
             Intent i = new Intent(this, FloatingFuelService.class);
             i.setAction(FloatingFuelService.ACTION_REFRESH);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
             else startService(i);
-        } catch (Exception ignored) {}
+        } catch (Throwable ignored) {}
     }
 
     @Override
