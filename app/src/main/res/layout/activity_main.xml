@@ -39,11 +39,12 @@
                 android:textColor="@color/text_gray"
                 android:layout_marginBottom="12dp" />
 
+            <!-- CAR INFO ТЕПЕРЬ ПЕРВЫЙ -->
             <Button
-                android:id="@+id/btn_perm_overlay"
+                android:id="@+id/btn_perm_carinfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="1. Наложение поверх окон"
+                android:text="1. Доступ к данным авто (CAR_INFO)"
                 android:backgroundTint="@color/btn_gray"
                 android:textColor="@color/text_black"
                 android:layout_marginBottom="8dp" />
@@ -58,10 +59,10 @@
                 android:layout_marginBottom="8dp" />
 
             <Button
-                android:id="@+id/btn_perm_carinfo"
+                android:id="@+id/btn_perm_overlay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="3. Доступ к данным авто (CAR_INFO)"
+                android:text="3. Наложение поверх окон"
                 android:backgroundTint="@color/btn_gray"
                 android:textColor="@color/text_black"
                 android:layout_marginBottom="16dp" />
