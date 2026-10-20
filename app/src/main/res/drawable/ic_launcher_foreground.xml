@@ -10,11 +10,10 @@
         android:fillColor="#FFFFFF"
         android:pathData="M54,24 C37.43,24 24,37.43 24,54 C24,70.57 37.43,84 54,84 C70.57,84 84,70.57 84,54 C84,37.43 70.57,24 54,24 Z" />
 
-    <!-- Внутренняя пунктирная окружность -->
+    <!-- Внутренняя сплошная тонкая окружность -->
     <path
         android:strokeColor="#A5C85A"
         android:strokeWidth="1.5"
-        android:strokeDashArray="2, 2.5"
         android:fillColor="@android:color/transparent"
         android:pathData="M54,34 A20,20 0 1,0 54,74 A20,20 0 1,0 54,34 Z" />
 
