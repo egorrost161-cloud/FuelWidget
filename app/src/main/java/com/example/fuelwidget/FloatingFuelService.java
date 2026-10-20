@@ -190,19 +190,21 @@ public class FloatingFuelService extends Service {
         if (fuelText == null || iconView == null) return;
 
         float density = getResources().getDisplayMetrics().density;
+        
+        // 1. Устанавливаем размер
         fuelText.setTextSize(settings.getFontSize());
 
+        // 2. Устанавливаем ТОЛЩИНУ (Работает на Android 9+)
+        int weight = settings.getFontWeight();
         if (robotoFlex != null) {
-            fuelText.setTypeface(robotoFlex);
+            // Создаем шрифт с нужным весом из нашего файла
+            fuelText.setTypeface(Typeface.create(robotoFlex, weight, false));
         } else {
-            fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+            // Если файл потерялся, используем системный (с округлением)
+            fuelText.setTypeface(Typeface.create("sans-serif", weight));
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            fuelText.getPaint().setFontFeatureSettings("'wght' " + settings.getFontWeight());
-        }
-        fuelText.invalidate();
-
+        // 3. Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
