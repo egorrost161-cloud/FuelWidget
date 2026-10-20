@@ -30,7 +30,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -63,6 +62,8 @@ public class FloatingFuelService extends Service {
     private float lastFuel = -1f;
     private boolean lastLow = false;
 
+    private Typeface robotoFlex;
+
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
         public void onConfigurationChanged(Configuration newConfig) {
@@ -94,36 +95,36 @@ public class FloatingFuelService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        settings = new SettingsManager(this);
+
         try {
-            settings = new SettingsManager(this);
+            createNotificationChannel();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification notification = new Notification.Builder(this, "fuel_channel")
+                        .setContentTitle("Топливо")
+                        .setContentText("Отслеживание уровня топлива")
+                        .setSmallIcon(android.R.drawable.ic_menu_info_details)
+                        .build();
+                startForeground(1, notification);
+            }
+        } catch (Exception ignored) {}
 
-            try {
-                createNotificationChannel();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Notification notification = new Notification.Builder(this, "fuel_channel")
-                            .setContentTitle("Топливо")
-                            .setContentText("Отслеживание уровня топлива")
-                            .setSmallIcon(android.R.drawable.ic_menu_info_details)
-                            .build();
-                    startForeground(1, notification);
-                }
-            } catch (Exception ignored) {}
-
-            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-            usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
-
-            registerComponentCallbacks(configCallback);
-
-            createFloatingView();
-            connectCar();
-
-            handler.post(updateTask);
-            handler.post(visibilityTask);
-
-        } catch (Throwable e) {
-            Toast.makeText(this, "Ошибка сервиса: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            stopSelf();
+        try {
+            robotoFlex = androidx.core.content.res.ResourcesCompat.getFont(this, R.font.roboto_flex);
+        } catch (Exception e) {
+            robotoFlex = null;
         }
+
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+
+        registerComponentCallbacks(configCallback);
+
+        createFloatingView();
+        connectCar();
+
+        handler.post(updateTask);
+        handler.post(visibilityTask);
     }
 
     private void createFloatingView() {
@@ -191,10 +192,16 @@ public class FloatingFuelService extends Service {
 
         fuelText.setTextSize(settings.getFontSize());
 
-        try {
-            Typeface tf = Typeface.create("sans-serif", settings.getFontWeight());
-            fuelText.setTypeface(tf);
-        } catch (Throwable ignored) {}
+        if (robotoFlex != null) {
+            fuelText.setTypeface(robotoFlex);
+        } else {
+            fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            fuelText.getPaint().setFontFeatureSettings("'wght' " + settings.getFontWeight());
+        }
+        fuelText.invalidate();
 
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
