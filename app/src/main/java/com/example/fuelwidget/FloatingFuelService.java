@@ -62,8 +62,6 @@ public class FloatingFuelService extends Service {
     private float lastFuel = -1f;
     private boolean lastLow = false;
 
-    private Typeface robotoFlex;
-
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
         public void onConfigurationChanged(Configuration newConfig) {
@@ -108,12 +106,6 @@ public class FloatingFuelService extends Service {
                 startForeground(1, notification);
             }
         } catch (Exception ignored) {}
-
-        try {
-            robotoFlex = androidx.core.content.res.ResourcesCompat.getFont(this, R.font.roboto_flex);
-        } catch (Exception e) {
-            robotoFlex = null;
-        }
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
@@ -192,16 +184,10 @@ public class FloatingFuelService extends Service {
 
         fuelText.setTextSize(settings.getFontSize());
 
-        if (robotoFlex != null) {
-            fuelText.setTypeface(robotoFlex);
-        } else {
-            fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            fuelText.getPaint().setFontFeatureSettings("'wght' " + settings.getFontWeight());
-        }
-        fuelText.invalidate();
+        try {
+            Typeface tf = Typeface.create("sans-serif", settings.getFontWeight());
+            fuelText.setTypeface(tf);
+        } catch (Throwable ignored) {}
 
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
