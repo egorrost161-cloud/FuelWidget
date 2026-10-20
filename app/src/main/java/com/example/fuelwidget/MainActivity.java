@@ -89,7 +89,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        applySettings();
+        // ЗАЩИТА: запускаем сервис, только если есть разрешение на оверлей
+        boolean hasOverlay = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            hasOverlay = Settings.canDrawOverlays(this);
+        }
+        if (hasOverlay) {
+            applySettings();
+        }
     }
 
     private void checkAllPermissions() {
