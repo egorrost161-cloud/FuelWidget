@@ -32,6 +32,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 
 import java.util.Set;
 
@@ -61,6 +62,8 @@ public class FloatingFuelService extends Service {
 
     private float lastFuel = -1f;
     private boolean lastLow = false;
+
+    private Typeface robotoFlex; // Кэшированный шрифт
 
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
@@ -106,6 +109,13 @@ public class FloatingFuelService extends Service {
                 startForeground(1, notification);
             }
         } catch (Exception ignored) {}
+
+        // Загружаем вариативный шрифт
+        try {
+            robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
+        } catch (Exception e) {
+            robotoFlex = null;
+        }
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
@@ -184,10 +194,17 @@ public class FloatingFuelService extends Service {
 
         fuelText.setTextSize(settings.getFontSize());
 
-        try {
-            Typeface tf = Typeface.create("sans-serif", settings.getFontWeight());
-            fuelText.setTypeface(tf);
-        } catch (Throwable ignored) {}
+        if (robotoFlex != null) {
+            fuelText.setTypeface(robotoFlex);
+        } else {
+            fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        }
+
+        // Плавный вес через вариативную ось 'wght'
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            fuelText.getPaint().setFontFeatureSettings("'wght' " + settings.getFontWeight());
+        }
+        fuelText.invalidate();
 
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
