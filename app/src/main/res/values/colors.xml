@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg_main">#F5F5F5</color>
-    <color name="btn_gray">#E0E0E0</color>
-    <color name="btn_green">#4CAF50</color>
-    <color name="btn_red">#F44336</color>
-    <color name="text_black">#000000</color>
-    <color name="text_gray">#757575</color>
+    <color name="ic_launcher_background">#A5C85A</color>
 </resources>
