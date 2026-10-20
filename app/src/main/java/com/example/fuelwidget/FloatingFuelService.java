@@ -63,7 +63,7 @@ public class FloatingFuelService extends Service {
     private float lastFuel = -1f;
     private boolean lastLow = false;
 
-    private Typeface robotoFlex; // Кэшированный шрифт
+    private Typeface robotoFlex;
 
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
@@ -110,7 +110,6 @@ public class FloatingFuelService extends Service {
             }
         } catch (Exception ignored) {}
 
-        // Загружаем вариативный шрифт
         try {
             robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
         } catch (Exception e) {
@@ -191,7 +190,6 @@ public class FloatingFuelService extends Service {
         if (fuelText == null || iconView == null) return;
 
         float density = getResources().getDisplayMetrics().density;
-
         fuelText.setTextSize(settings.getFontSize());
 
         if (robotoFlex != null) {
@@ -200,7 +198,6 @@ public class FloatingFuelService extends Service {
             fuelText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
         }
 
-        // Плавный вес через вариативную ось 'wght'
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             fuelText.getPaint().setFontFeatureSettings("'wght' " + settings.getFontWeight());
         }
