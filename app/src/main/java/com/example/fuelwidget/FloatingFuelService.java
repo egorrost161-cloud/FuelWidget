@@ -33,8 +33,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.res.ResourcesCompat;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Set;
 
 public class FloatingFuelService extends Service {
@@ -63,8 +65,6 @@ public class FloatingFuelService extends Service {
 
     private float lastFuel = -1f;
     private boolean lastLow = false;
-
-    private Typeface robotoFlex;
 
     private final ComponentCallbacks configCallback = new ComponentCallbacks() {
         @Override
@@ -98,7 +98,6 @@ public class FloatingFuelService extends Service {
     public void onCreate() {
         super.onCreate();
         
-        // ГЛОБАЛЬНАЯ ЗАЩИТА СЕРВИСА
         try {
             settings = new SettingsManager(this);
 
@@ -114,12 +113,6 @@ public class FloatingFuelService extends Service {
                 }
             } catch (Exception ignored) {}
 
-            try {
-                robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
-            } catch (Exception e) {
-                robotoFlex = null;
-            }
-
             windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
             usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
 
@@ -132,7 +125,6 @@ public class FloatingFuelService extends Service {
             handler.post(visibilityTask);
 
         } catch (Throwable e) {
-            // Если мы на телефоне или нет разрешений — просто выключаем сервис
             Toast.makeText(this, "Сервис остановлен: " + e.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
             stopSelf();
         }
@@ -202,17 +194,44 @@ public class FloatingFuelService extends Service {
         float density = getResources().getDisplayMetrics().density;
         fuelText.setTextSize(settings.getFontSize());
 
-        int weight = settings.getFontWeight();
-        if (robotoFlex != null) {
-            fuelText.setTypeface(Typeface.create(robotoFlex, weight, false));
-        } else {
-            fuelText.setTypeface(Typeface.create("sans-serif", weight));
-        }
+        // Плавная установка веса шрифта
+        fuelText.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
 
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
+    }
+
+    /**
+     * Извлекает шрифт из res/font в кэш и создает Typeface с вариативным весом.
+     * Это работает плавно на Android 9+.
+     */
+    private Typeface getTypefaceWithWeight(int weight) {
+        try {
+            // Если файл уже извлечен, используем его
+            File fontFile = new File(getCacheDir(), "roboto_flex.ttf");
+            if (!fontFile.exists()) {
+                InputStream is = getResources().openRawResource(R.font.roboto_flex);
+                FileOutputStream fos = new FileOutputStream(fontFile);
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = is.read(buffer)) > 0) {
+                    fos.write(buffer, 0, length);
+                }
+                fos.close();
+                is.close();
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                return new Typeface.Builder(fontFile)
+                        .setFontVariationSettings("'wght' " + weight)
+                        .build();
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback, если что-то пошло не так
+        return Typeface.create("sans-serif", weight);
     }
 
     private void connectCar() {
