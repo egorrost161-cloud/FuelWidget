@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
@@ -96,36 +97,45 @@ public class FloatingFuelService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        settings = new SettingsManager(this);
-
+        
+        // ГЛОБАЛЬНАЯ ЗАЩИТА СЕРВИСА
         try {
-            createNotificationChannel();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Notification notification = new Notification.Builder(this, "fuel_channel")
-                        .setContentTitle("Топливо")
-                        .setContentText("Отслеживание уровня топлива")
-                        .setSmallIcon(android.R.drawable.ic_menu_info_details)
-                        .build();
-                startForeground(1, notification);
+            settings = new SettingsManager(this);
+
+            try {
+                createNotificationChannel();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Notification notification = new Notification.Builder(this, "fuel_channel")
+                            .setContentTitle("Топливо")
+                            .setContentText("Отслеживание уровня топлива")
+                            .setSmallIcon(android.R.drawable.ic_menu_info_details)
+                            .build();
+                    startForeground(1, notification);
+                }
+            } catch (Exception ignored) {}
+
+            try {
+                robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
+            } catch (Exception e) {
+                robotoFlex = null;
             }
-        } catch (Exception ignored) {}
 
-        try {
-            robotoFlex = ResourcesCompat.getFont(this, R.font.roboto_flex);
-        } catch (Exception e) {
-            robotoFlex = null;
+            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+            usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+
+            registerComponentCallbacks(configCallback);
+
+            createFloatingView();
+            connectCar();
+
+            handler.post(updateTask);
+            handler.post(visibilityTask);
+
+        } catch (Throwable e) {
+            // Если мы на телефоне или нет разрешений — просто выключаем сервис
+            Toast.makeText(this, "Сервис остановлен: " + e.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
+            stopSelf();
         }
-
-        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-        usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
-
-        registerComponentCallbacks(configCallback);
-
-        createFloatingView();
-        connectCar();
-
-        handler.post(updateTask);
-        handler.post(visibilityTask);
     }
 
     private void createFloatingView() {
@@ -190,21 +200,15 @@ public class FloatingFuelService extends Service {
         if (fuelText == null || iconView == null) return;
 
         float density = getResources().getDisplayMetrics().density;
-        
-        // 1. Устанавливаем размер
         fuelText.setTextSize(settings.getFontSize());
 
-        // 2. Устанавливаем ТОЛЩИНУ (Работает на Android 9+)
         int weight = settings.getFontWeight();
         if (robotoFlex != null) {
-            // Создаем шрифт с нужным весом из нашего файла
             fuelText.setTypeface(Typeface.create(robotoFlex, weight, false));
         } else {
-            // Если файл потерялся, используем системный (с округлением)
             fuelText.setTypeface(Typeface.create("sans-serif", weight));
         }
 
-        // 3. Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
