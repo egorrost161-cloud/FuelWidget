@@ -4,36 +4,57 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Белый круг -->
+
+    <!-- Белый круг в центре -->
     <path
         android:fillColor="#FFFFFF"
         android:pathData="M54,24 C37.43,24 24,37.43 24,54 C24,70.57 37.43,84 54,84 C70.57,84 84,70.57 84,54 C84,37.43 70.57,24 54,24 Z" />
 
-    <!-- Зеленые шкалы (упрощенно) -->
+    <!-- Внутренняя пунктирная окружность -->
     <path
-        android:fillColor="#A5C85A"
-        android:pathData="M54,30 A24,24 0 0,1 78,54 L74,54 A20,20 0 0,0 54,34 Z" />
-    <path
-        android:fillColor="#A5C85A"
-        android:pathData="M78,54 A24,24 0 0,1 54,78 L54,74 A20,20 0 0,0 74,54 Z" />
-    <path
-        android:fillColor="#A5C85A"
-        android:pathData="M54,78 A24,24 0 0,1 30,54 L34,54 A20,20 0 0,0 54,74 Z" />
-    <path
-        android:fillColor="#A5C85A"
-        android:pathData="M30,54 A24,24 0 0,1 54,30 L54,34 A20,20 0 0,0 34,54 Z" />
-    
+        android:strokeColor="#A5C85A"
+        android:strokeWidth="1.5"
+        android:strokeDashArray="2, 2.5"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M54,34 A20,20 0 1,0 54,74 A20,20 0 1,0 54,34 Z" />
+
+    <!-- Восемь зеленых сегментов (дуги) по кругу -->
+    <!-- Верхние -->
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M42,32 A18,18 0 0,1 48,28" />
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M60,28 A18,18 0 0,1 66,32" />
+    <!-- Правые -->
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M76,42 A18,18 0 0,1 80,48" />
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M80,60 A18,18 0 0,1 76,66" />
+    <!-- Нижние -->
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M66,76 A18,18 0 0,1 60,80" />
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M48,80 A18,18 0 0,1 42,76" />
+    <!-- Левые -->
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M32,66 A18,18 0 0,1 28,60" />
+    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M28,48 A18,18 0 0,1 32,42" />
+
     <!-- Стрелка -->
     <path
         android:fillColor="#A5C85A"
-        android:pathData="M54,54 L64,44 L56,56 Z" />
-        
-    <!-- Буквы E и F -->
+        android:pathData="M54,54 L68,38 L57,56 Z" />
+
+    <!-- Центральная точка (белая с зеленой обводкой) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,51 A3,3 0 1,0 54,57 A3,3 0 1,0 54,51 Z" />
+    <path
+        android:strokeColor="#A5C85A"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M54,51 A3,3 0 1,0 54,57 A3,3 0 1,0 54,51 Z" />
+
+    <!-- Буква E -->
     <path
         android:fillColor="#A5C85A"
-        android:pathData="M38,64 L40,64 L40,70 L38,70 Z M36,64 L42,64 L42,66 L36,66 Z M36,68 L42,68 L42,70 L36,70 Z" /> <!-- Буква E -->
+        android:pathData="M36,64 h 5 v 1.5 h -3.5 v 1.5 h 3 v 1.5 h -3 v 1.5 h 3.5 v 1.5 h -5 z" />
+    
+    <!-- Буква F -->
     <path
         android:fillColor="#A5C85A"
-        android:pathData="M68,64 L72,64 L72,66 L70,66 L70,68 L72,68 L72,70 L68,70 Z M68,64 L70,64 L70,66 L68,66 Z" /> <!-- Буква F -->
+        android:pathData="M67,64 h 5 v 1.5 h -3.5 v 1.5 h 3 v 1.5 h -3 v 3 h -1.5 z" />
+
 </vector>
