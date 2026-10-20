@@ -5,55 +5,53 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Белый круг в центре -->
+    <!-- Белый круг-основа -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,24 C37.43,24 24,37.43 24,54 C24,70.57 37.43,84 54,84 C70.57,84 84,70.57 84,54 C84,37.43 70.57,24 54,24 Z" />
+        android:pathData="M54,24 a30,30 0 1,0 0,60 a30,30 0 1,0 0,-60" />
 
-    <!-- Внутренняя сплошная тонкая окружность -->
+    <!-- Внутренняя тонкая окружность -->
     <path
         android:strokeColor="#A5C85A"
         android:strokeWidth="1.5"
         android:fillColor="@android:color/transparent"
-        android:pathData="M54,34 A20,20 0 1,0 54,74 A20,20 0 1,0 54,34 Z" />
+        android:pathData="M54,34 a20,20 0 1,0 0,40 a20,20 0 1,0 0,-40" />
 
-    <!-- Восемь зеленых сегментов (дуги) по кругу -->
-    <!-- Верхние -->
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M42,32 A18,18 0 0,1 48,28" />
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M60,28 A18,18 0 0,1 66,32" />
-    <!-- Правые -->
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M76,42 A18,18 0 0,1 80,48" />
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M80,60 A18,18 0 0,1 76,66" />
-    <!-- Нижние -->
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M66,76 A18,18 0 0,1 60,80" />
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M48,80 A18,18 0 0,1 42,76" />
-    <!-- Левые -->
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M32,66 A18,18 0 0,1 28,60" />
-    <path android:strokeColor="#A5C85A" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="@android:color/transparent" android:pathData="M28,48 A18,18 0 0,1 32,42" />
+    <!-- 8 делений по кругу (идеально ровные) -->
+    <group android:pivotX="54" android:pivotY="54">
+        <path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" />
+        <group android:rotation="45"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+        <group android:rotation="90"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+        <group android:rotation="135"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+        <group android:rotation="180"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+        <group android:rotation="225"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+        <group android:rotation="270"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+        <group android:rotation="315"><path android:strokeColor="#A5C85A" android:strokeWidth="5" android:strokeLineCap="round" android:pathData="M54,31 L54,35" /></group>
+    </group>
 
     <!-- Стрелка -->
     <path
         android:fillColor="#A5C85A"
-        android:pathData="M54,54 L68,38 L57,56 Z" />
+        android:pathData="M54,54 L65,43 L56,56 Z" />
 
     <!-- Центральная точка (белая с зеленой обводкой) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,51 A3,3 0 1,0 54,57 A3,3 0 1,0 54,51 Z" />
+        android:pathData="M54,52 a2,2 0 1,0 0,4 a2,2 0 1,0 0,-4" />
     <path
         android:strokeColor="#A5C85A"
         android:strokeWidth="1.5"
         android:fillColor="@android:color/transparent"
-        android:pathData="M54,51 A3,3 0 1,0 54,57 A3,3 0 1,0 54,51 Z" />
+        android:pathData="M54,52 a2,2 0 1,0 0,4 a2,2 0 1,0 0,-4" />
 
     <!-- Буква E -->
     <path
         android:fillColor="#A5C85A"
-        android:pathData="M36,64 h 5 v 1.5 h -3.5 v 1.5 h 3 v 1.5 h -3 v 1.5 h 3.5 v 1.5 h -5 z" />
+        android:pathData="M38,62 h6 v2 h-4 v1 h3 v2 h-3 v1 h4 v2 h-6 z" />
     
     <!-- Буква F -->
     <path
         android:fillColor="#A5C85A"
-        android:pathData="M67,64 h 5 v 1.5 h -3.5 v 1.5 h 3 v 1.5 h -3 v 3 h -1.5 z" />
+        android:pathData="M66,62 h6 v2 h-4 v1 h3 v2 h-3 v3 h-2 z" />
 
 </vector>
