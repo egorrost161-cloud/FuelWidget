@@ -194,22 +194,18 @@ public class FloatingFuelService extends Service {
         float density = getResources().getDisplayMetrics().density;
         fuelText.setTextSize(settings.getFontSize());
 
-        // Плавная установка веса шрифта
+        // Установка шрифта с плавным весом
         fuelText.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
 
+        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
     }
 
-    /**
-     * Извлекает шрифт из res/font в кэш и создает Typeface с вариативным весом.
-     * Это работает плавно на Android 9+.
-     */
     private Typeface getTypefaceWithWeight(int weight) {
         try {
-            // Если файл уже извлечен, используем его
             File fontFile = new File(getCacheDir(), "roboto_flex.ttf");
             if (!fontFile.exists()) {
                 InputStream is = getResources().openRawResource(R.font.roboto_flex);
@@ -230,7 +226,6 @@ public class FloatingFuelService extends Service {
             }
         } catch (Exception ignored) {}
 
-        // Fallback, если что-то пошло не так
         return Typeface.create("sans-serif", weight);
     }
 
