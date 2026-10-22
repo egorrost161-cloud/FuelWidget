@@ -194,14 +194,15 @@ public class FloatingFuelService extends Service {
         float density = getResources().getDisplayMetrics().density;
         fuelText.setTextSize(settings.getFontSize());
 
-        // Установка шрифта с плавным весом
         fuelText.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
 
-        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
+
+        // ПРИНУДИТЕЛЬНЫЙ СДВИГ ИКОНКИ ВВЕРХ НА 4 PX, ЧТОБЫ ВЫРОВНЯТЬ С ТЕКСТОМ
+        iconView.setTranslationY(-4 * density);
     }
 
     private Typeface getTypefaceWithWeight(int weight) {
