@@ -18,6 +18,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,13 +27,12 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,8 +49,7 @@ public class FloatingFuelService extends Service {
     private WindowManager windowManager;
     private View floatingView;
     private WindowManager.LayoutParams params;
-    private TextView fuelText;
-    private ImageView iconView;
+    private Button fuelButton;
 
     private SettingsManager settings;
     private Car mCar;
@@ -132,8 +131,7 @@ public class FloatingFuelService extends Service {
 
     private void createFloatingView() {
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_fuel, null);
-        fuelText = floatingView.findViewById(R.id.fuel_text);
-        iconView = floatingView.findViewById(R.id.fuel_icon);
+        fuelButton = floatingView.findViewById(R.id.fuel_button);
 
         int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -189,19 +187,22 @@ public class FloatingFuelService extends Service {
     }
 
     private void applySizes() {
-        if (fuelText == null || iconView == null) return;
+        if (fuelButton == null) return;
 
         float density = getResources().getDisplayMetrics().density;
-        fuelText.setTextSize(settings.getFontSize());
+        
+        // Размер шрифта
+        fuelButton.setTextSize(settings.getFontSize());
+        fuelButton.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
 
-        fuelText.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
-
+        // Размер иконки (drawableStart)
         int iconPx = (int) (settings.getIconSize() * density);
-        ViewGroup.LayoutParams lp = iconView.getLayoutParams();
-        lp.width = iconPx; lp.height = iconPx;
-        iconView.setLayoutParams(lp);
-
-        // УБРАН СДВИГ translationY! Теперь иконка выравнивается самой разметкой.
+        Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_fuel);
+        if (icon != null) {
+            icon.setBounds(0, 0, iconPx, iconPx);
+            // Устанавливаем иконку слева (0,0 - размеры уже заданы)
+            fuelButton.setCompoundDrawables(icon, null, null, null);
+        }
     }
 
     private Typeface getTypefaceWithWeight(int weight) {
@@ -253,27 +254,35 @@ public class FloatingFuelService extends Service {
     }
 
     private void updateFuelText(float fuel, boolean low) {
-        if (fuelText == null) return;
+        if (fuelButton == null) return;
         handler.post(() -> {
             if (fuel < 0) {
-                fuelText.setText("-- литров");
+                fuelButton.setText("-- литров");
             } else {
                 int liters = (int) fuel;
-                fuelText.setText(liters + " " + getLiterWord(liters));
+                fuelButton.setText(liters + " " + getLiterWord(liters));
             }
             int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
-            fuelText.setTextColor(color);
-            if (iconView != null) iconView.setColorFilter(color);
+            fuelButton.setTextColor(color);
+            
+            // Красим иконку
+            Drawable[] drawables = fuelButton.getCompoundDrawables();
+            if (drawables[0] != null) {
+                drawables[0].setTint(color);
+            }
         });
     }
 
     private void showError() {
         handler.post(() -> {
-            if (fuelText != null) {
-                fuelText.setText("-- литров");
+            if (fuelButton != null) {
+                fuelButton.setText("-- литров");
                 int color = isDarkText() ? Color.BLACK : Color.WHITE;
-                fuelText.setTextColor(color);
-                if (iconView != null) iconView.setColorFilter(color);
+                fuelButton.setTextColor(color);
+                Drawable[] drawables = fuelButton.getCompoundDrawables();
+                if (drawables[0] != null) {
+                    drawables[0].setTint(color);
+                }
             }
         });
     }
