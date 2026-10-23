@@ -24,6 +24,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.text.Html;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -252,35 +255,26 @@ public class FloatingFuelService extends Service {
                 text = liters + " " + getLiterWord(liters);
             }
 
-            // Получаем иконку
+            int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
+
+            // Получаем иконку, масштабируем и красим
             Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_fuel);
             int iconSize = (int) (settings.getIconSize() * getResources().getDisplayMetrics().density);
             if (icon != null) {
                 icon.setBounds(0, 0, iconSize, iconSize);
-            }
-
-            int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
-            if (icon != null) {
                 icon.setTint(color);
             }
 
-            // Вставляем иконку внутрь текста через HTML
-            android.text.Spanned htmlText = Html.fromHtml("<img src='icon'/> " + text, Html.FROM_HTML_MODE_LEGACY, null, null);
-            fuelText.setText(htmlText);
-            fuelText.setTextColor(color);
-
-            // Подменяем тег img на нашу картинку
-            android.text.SpannableStringBuilder builder = new android.text.SpannableStringBuilder(htmlText);
-            android.text.style.ImageSpan[] spans = builder.getSpans(0, builder.length(), android.text.style.ImageSpan.class);
-            for (android.text.style.ImageSpan span : spans) {
-                int start = builder.getSpanStart(span);
-                int end = builder.getSpanEnd(span);
-                builder.removeSpan(span);
-                if (icon != null) {
-                    builder.setSpan(new android.text.style.ImageSpan(this, icon), start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                }
+            // Создаем текст с картинкой
+            SpannableStringBuilder builder = new SpannableStringBuilder("  " + text);
+            if (icon != null) {
+                // Вставляем картинку на место первых двух пробелов
+                ImageSpan imageSpan = new ImageSpan(icon, ImageSpan.ALIGN_BASELINE);
+                builder.setSpan(imageSpan, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+
             fuelText.setText(builder);
+            fuelText.setTextColor(color);
         });
     }
 
