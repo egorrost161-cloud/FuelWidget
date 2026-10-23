@@ -200,6 +200,9 @@ public class FloatingFuelService extends Service {
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
+
+        // Поднимаем иконку на пол-деления (0.5dp) вверх
+        iconView.setTranslationY(-0.5f * density);
     }
 
     private Typeface getTypefaceWithWeight(int weight) {
