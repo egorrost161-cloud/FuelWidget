@@ -18,25 +18,21 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.text.Html;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ImageSpan;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,6 +50,7 @@ public class FloatingFuelService extends Service {
     private View floatingView;
     private WindowManager.LayoutParams params;
     private TextView fuelText;
+    private ImageView iconView;
 
     private SettingsManager settings;
     private Car mCar;
@@ -136,6 +133,7 @@ public class FloatingFuelService extends Service {
     private void createFloatingView() {
         floatingView = LayoutInflater.from(this).inflate(R.layout.floating_fuel, null);
         fuelText = floatingView.findViewById(R.id.fuel_text);
+        iconView = floatingView.findViewById(R.id.fuel_icon);
 
         int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -191,9 +189,17 @@ public class FloatingFuelService extends Service {
     }
 
     private void applySizes() {
-        if (fuelText == null) return;
+        if (fuelText == null || iconView == null) return;
+
+        float density = getResources().getDisplayMetrics().density;
         fuelText.setTextSize(settings.getFontSize());
+
         fuelText.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
+
+        int iconPx = (int) (settings.getIconSize() * density);
+        ViewGroup.LayoutParams lp = iconView.getLayoutParams();
+        lp.width = iconPx; lp.height = iconPx;
+        iconView.setLayoutParams(lp);
     }
 
     private Typeface getTypefaceWithWeight(int weight) {
@@ -247,34 +253,15 @@ public class FloatingFuelService extends Service {
     private void updateFuelText(float fuel, boolean low) {
         if (fuelText == null) return;
         handler.post(() -> {
-            String text;
             if (fuel < 0) {
-                text = "-- литров";
+                fuelText.setText("-- литров");
             } else {
                 int liters = (int) fuel;
-                text = liters + " " + getLiterWord(liters);
+                fuelText.setText(liters + " " + getLiterWord(liters));
             }
-
             int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
-
-            // Получаем иконку, масштабируем и красим
-            Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_fuel);
-            int iconSize = (int) (settings.getIconSize() * getResources().getDisplayMetrics().density);
-            if (icon != null) {
-                icon.setBounds(0, 0, iconSize, iconSize);
-                icon.setTint(color);
-            }
-
-            // Создаем текст с картинкой
-            SpannableStringBuilder builder = new SpannableStringBuilder("  " + text);
-            if (icon != null) {
-                // Вставляем картинку на место первых двух пробелов
-                ImageSpan imageSpan = new ImageSpan(icon, ImageSpan.ALIGN_BASELINE);
-                builder.setSpan(imageSpan, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-
-            fuelText.setText(builder);
             fuelText.setTextColor(color);
+            if (iconView != null) iconView.setColorFilter(color);
         });
     }
 
@@ -284,6 +271,7 @@ public class FloatingFuelService extends Service {
                 fuelText.setText("-- литров");
                 int color = isDarkText() ? Color.BLACK : Color.WHITE;
                 fuelText.setTextColor(color);
+                if (iconView != null) iconView.setColorFilter(color);
             }
         });
     }
