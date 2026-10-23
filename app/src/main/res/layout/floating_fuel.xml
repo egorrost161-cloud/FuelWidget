@@ -1,22 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_height="32dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
     android:background="@android:color/transparent"
-    android:padding="4dp">
+    android:paddingStart="4dp"
+    android:paddingEnd="8dp">
 
-    <Button
-        android:id="@+id/fuel_button"
+    <ImageView
+        android:id="@+id/fuel_icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        android:drawableStart="@drawable/ic_fuel"
-        android:drawablePadding="6dp"
-        android:gravity="center_vertical"
+        android:src="@drawable/ic_fuel"
+        android:layout_marginEnd="6dp"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="Fuel icon" />
+
+    <TextView
+        android:id="@+id/fuel_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="-- литров"
-        android:textAllCaps="false"
-        android:textColor="#000000"
         android:textSize="18sp"
-        android:includeFontPadding="false" />
+        android:textStyle="normal"
+        android:textColor="#000000"
+        android:includeFontPadding="false"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical" />
 
 </LinearLayout>
