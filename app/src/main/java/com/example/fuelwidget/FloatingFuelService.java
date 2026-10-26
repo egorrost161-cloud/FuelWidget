@@ -44,7 +44,8 @@ public class FloatingFuelService extends Service {
     public static final String ACTION_REFRESH = "com.example.fuelwidget.ACTION_REFRESH";
 
     private static final long UPDATE_INTERVAL = 5 * 60 * 1000L;
-    private static final long VISIBILITY_CHECK_INTERVAL = 1500L;
+    // ИЗМЕНЕНО: Проверка скрытия/появления теперь каждые 0.2 секунды (было 1.5 сек)
+    private static final long VISIBILITY_CHECK_INTERVAL = 200L;
 
     private WindowManager windowManager;
     private View floatingView;
@@ -299,7 +300,8 @@ public class FloatingFuelService extends Service {
         try {
             if (usageStatsManager == null) return;
             long t = System.currentTimeMillis();
-            UsageEvents events = usageStatsManager.queryEvents(t - 10000, t);
+            // ИЗМЕНЕНО: смотрим события только за последние 2 секунды для скорости
+            UsageEvents events = usageStatsManager.queryEvents(t - 2000, t);
             String lastPkg = null;
             UsageEvents.Event e = new UsageEvents.Event();
             while (events.hasNextEvent()) {
