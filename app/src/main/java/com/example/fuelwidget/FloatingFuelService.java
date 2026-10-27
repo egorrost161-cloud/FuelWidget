@@ -14,6 +14,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ServiceInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -30,7 +31,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -44,8 +44,7 @@ public class FloatingFuelService extends Service {
     public static final String ACTION_REFRESH = "com.example.fuelwidget.ACTION_REFRESH";
 
     private static final long UPDATE_INTERVAL = 5 * 60 * 1000L;
-    // ИЗМЕНЕНО: Проверка скрытия/появления теперь каждые 0.2 секунды (было 1.5 сек)
-    private static final long VISIBILITY_CHECK_INTERVAL = 200L;
+    private static final long VISIBILITY_CHECK_INTERVAL = 200L; // 0.2 сек
 
     private WindowManager windowManager;
     private View floatingView;
@@ -110,7 +109,13 @@ public class FloatingFuelService extends Service {
                             .setContentText("Отслеживание уровня топлива")
                             .setSmallIcon(android.R.drawable.ic_menu_info_details)
                             .build();
-                    startForeground(1, notification);
+                    
+                    // ИСПРАВЛЕНИЕ: Для Android 14+ нужен тип specialUse
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+                    } else {
+                        startForeground(1, notification);
+                    }
                 }
             } catch (Exception ignored) {}
 
@@ -126,7 +131,8 @@ public class FloatingFuelService extends Service {
             handler.post(visibilityTask);
 
         } catch (Throwable e) {
-            Toast.makeText(this, "Сервис остановлен: " + e.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
+            // Убрали Toast при старте, чтобы не мешать водителю (тихо падаем в лог)
+            e.printStackTrace();
             stopSelf();
         }
     }
@@ -202,7 +208,6 @@ public class FloatingFuelService extends Service {
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
 
-        // Поднимаем иконку на 1.5dp вверх для выравнивания с текстом
         iconView.setTranslationY(-1.5f * density);
     }
 
@@ -300,7 +305,6 @@ public class FloatingFuelService extends Service {
         try {
             if (usageStatsManager == null) return;
             long t = System.currentTimeMillis();
-            // ИЗМЕНЕНО: смотрим события только за последние 2 секунды для скорости
             UsageEvents events = usageStatsManager.queryEvents(t - 2000, t);
             String lastPkg = null;
             UsageEvents.Event e = new UsageEvents.Event();
