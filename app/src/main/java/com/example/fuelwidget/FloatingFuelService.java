@@ -30,6 +30,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -120,61 +121,68 @@ public class FloatingFuelService extends Service {
     }
 
     private void createFloatingView() {
-        floatingView = LayoutInflater.from(this).inflate(R.layout.floating_fuel, null);
-        fuelText = floatingView.findViewById(R.id.fuel_text);
-        iconView = floatingView.findViewById(R.id.fuel_icon);
+        try {
+            floatingView = LayoutInflater.from(this).inflate(R.layout.floating_fuel, null);
+            fuelText = floatingView.findViewById(R.id.fuel_text);
+            iconView = floatingView.findViewById(R.id.fuel_icon);
 
-        int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                : WindowManager.LayoutParams.TYPE_PHONE;
+            int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                    : WindowManager.LayoutParams.TYPE_PHONE;
 
-        params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                type,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-        );
+            params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    type,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT
+            );
 
-        params.gravity = Gravity.TOP | Gravity.START;
-        params.x = settings.getPosX();
-        params.y = settings.getPosY();
+            params.gravity = Gravity.TOP | Gravity.START;
+            params.x = settings.getPosX();
+            params.y = settings.getPosY();
 
-        applySizes();
+            applySizes();
 
-        floatingView.setOnTouchListener(new View.OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent event) {
-                if (settings.isLocked()) {
+            floatingView.setOnTouchListener(new View.OnTouchListener() {
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (settings.isLocked()) {
+                        return false;
+                    }
+
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            touchStartX = event.getRawX();
+                            touchStartY = event.getRawY();
+                            startX = params.x;
+                            startY = params.y;
+                            isDragging = false;
+                            return true;
+                        case MotionEvent.ACTION_MOVE:
+                            float dx = event.getRawX() - touchStartX;
+                            float dy = event.getRawY() - touchStartY;
+                            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true;
+                            if (isDragging) {
+                                params.x = startX + (int) dx;
+                                params.y = startY + (int) dy;
+                                windowManager.updateViewLayout(floatingView, params);
+                            }
+                            return true;
+                        case MotionEvent.ACTION_UP:
+                            if (isDragging) settings.setPosition(params.x, params.y);
+                            return true;
+                    }
                     return false;
                 }
+            });
 
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        touchStartX = event.getRawX();
-                        touchStartY = event.getRawY();
-                        startX = params.x;
-                        startY = params.y;
-                        isDragging = false;
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-                        float dx = event.getRawX() - touchStartX;
-                        float dy = event.getRawY() - touchStartY;
-                        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true;
-                        if (isDragging) {
-                            params.x = startX + (int) dx;
-                            params.y = startY + (int) dy;
-                            windowManager.updateViewLayout(floatingView, params);
-                        }
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        if (isDragging) settings.setPosition(params.x, params.y);
-                        return true;
-                }
-                return false;
-            }
-        });
-
-        windowManager.addView(floatingView, params);
+            windowManager.addView(floatingView, params);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            final String errorMsg = "Ошибка окна: " + e.getClass().getSimpleName() + " " + e.getMessage();
+            handler.post(() -> Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show());
+        }
     }
 
     private void applySizes() {
@@ -197,7 +205,6 @@ public class FloatingFuelService extends Service {
 
     /**
      * Загружает Roboto Flex из assets/fonts/ и применяет вариативный вес 'wght'.
-     * Работает плавно: вес от 100 до 900.
      */
     private Typeface getTypeface() {
         int weight = settings.getFontWeight();
@@ -210,7 +217,6 @@ public class FloatingFuelService extends Service {
             builder.setFallback("sans-serif");
             return builder.build();
         } catch (Exception e) {
-            // Fallback, если что-то не так
             return Typeface.create("sans-serif", weight);
         }
     }
