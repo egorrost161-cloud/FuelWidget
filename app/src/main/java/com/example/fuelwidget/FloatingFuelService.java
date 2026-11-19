@@ -14,7 +14,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.ServiceInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -34,9 +33,6 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.Set;
 
 public class FloatingFuelService extends Service {
@@ -44,7 +40,7 @@ public class FloatingFuelService extends Service {
     public static final String ACTION_REFRESH = "com.example.fuelwidget.ACTION_REFRESH";
 
     private static final long UPDATE_INTERVAL = 5 * 60 * 1000L;
-    private static final long VISIBILITY_CHECK_INTERVAL = 200L; // 0.2 сек
+    private static final long VISIBILITY_CHECK_INTERVAL = 1500L;
 
     private WindowManager windowManager;
     private View floatingView;
@@ -89,7 +85,7 @@ public class FloatingFuelService extends Service {
             try {
                 mSensorManager = (CarSensorManager) mCar.getCarManager(Car.SENSOR_SERVICE);
                 readFuel();
-            } catch (Throwable e) { showError(); }
+            } catch (Exception e) { showError(); }
         }
         public void onServiceDisconnected(ComponentName n) { mSensorManager = null; }
     };
@@ -97,44 +93,30 @@ public class FloatingFuelService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        
+        settings = new SettingsManager(this);
+
         try {
-            settings = new SettingsManager(this);
+            createNotificationChannel();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification notification = new Notification.Builder(this, "fuel_channel")
+                        .setContentTitle("Топливо")
+                        .setContentText("Отслеживание уровня топлива")
+                        .setSmallIcon(android.R.drawable.ic_menu_info_details)
+                        .build();
+                startForeground(1, notification);
+            }
+        } catch (Exception ignored) {}
 
-            try {
-                createNotificationChannel();
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Notification notification = new Notification.Builder(this, "fuel_channel")
-                            .setContentTitle("Топливо")
-                            .setContentText("Отслеживание уровня топлива")
-                            .setSmallIcon(android.R.drawable.ic_menu_info_details)
-                            .build();
-                    
-                    // ИСПРАВЛЕНИЕ: Для Android 14+ нужен тип specialUse
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-                    } else {
-                        startForeground(1, notification);
-                    }
-                }
-            } catch (Exception ignored) {}
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
 
-            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-            usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+        registerComponentCallbacks(configCallback);
 
-            registerComponentCallbacks(configCallback);
+        createFloatingView();
+        connectCar();
 
-            createFloatingView();
-            connectCar();
-
-            handler.post(updateTask);
-            handler.post(visibilityTask);
-
-        } catch (Throwable e) {
-            // Убрали Toast при старте, чтобы не мешать водителю (тихо падаем в лог)
-            e.printStackTrace();
-            stopSelf();
-        }
+        handler.post(updateTask);
+        handler.post(visibilityTask);
     }
 
     private void createFloatingView() {
@@ -199,48 +181,45 @@ public class FloatingFuelService extends Service {
         if (fuelText == null || iconView == null) return;
 
         float density = getResources().getDisplayMetrics().density;
+
+        // Размер шрифта
         fuelText.setTextSize(settings.getFontSize());
 
-        fuelText.setTypeface(getTypefaceWithWeight(settings.getFontWeight()));
+        // Применяем шрифт с вариативным весом
+        fuelText.setTypeface(getTypeface());
 
+        // Размер иконки
         int iconPx = (int) (settings.getIconSize() * density);
         ViewGroup.LayoutParams lp = iconView.getLayoutParams();
         lp.width = iconPx; lp.height = iconPx;
         iconView.setLayoutParams(lp);
-
-        iconView.setTranslationY(-1.5f * density);
     }
 
-    private Typeface getTypefaceWithWeight(int weight) {
+    /**
+     * Загружает Roboto Flex из assets/fonts/ и применяет вариативный вес 'wght'.
+     * Работает плавно: вес от 100 до 900.
+     */
+    private Typeface getTypeface() {
+        int weight = settings.getFontWeight();
         try {
-            File fontFile = new File(getCacheDir(), "roboto_flex.ttf");
-            if (!fontFile.exists()) {
-                InputStream is = getResources().openRawResource(R.font.roboto_flex);
-                FileOutputStream fos = new FileOutputStream(fontFile);
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = is.read(buffer)) > 0) {
-                    fos.write(buffer, 0, length);
-                }
-                fos.close();
-                is.close();
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                return new Typeface.Builder(fontFile)
-                        .setFontVariationSettings("'wght' " + weight)
-                        .build();
-            }
-        } catch (Exception ignored) {}
-
-        return Typeface.create("sans-serif", weight);
+            Typeface.Builder builder = new Typeface.Builder(
+                    getAssets(),
+                    "fonts/roboto_flex.ttf"
+            );
+            builder.setFontVariationSettings("'wght' " + weight);
+            builder.setFallback("sans-serif");
+            return builder.build();
+        } catch (Exception e) {
+            // Fallback, если что-то не так
+            return Typeface.create("sans-serif", weight);
+        }
     }
 
     private void connectCar() {
         try {
             mCar = Car.createCar(this, carConnection);
             if (mCar != null) mCar.connect();
-        } catch (Throwable e) { showError(); }
+        } catch (Exception e) { showError(); }
     }
 
     private void readFuel() {
@@ -256,17 +235,17 @@ public class FloatingFuelService extends Service {
                 return;
             }
             showError();
-        } catch (Throwable e) { showError(); }
+        } catch (Exception e) { showError(); }
     }
 
     private void updateFuelText(float fuel, boolean low) {
         if (fuelText == null) return;
         handler.post(() -> {
             if (fuel < 0) {
-                fuelText.setText("-- литров");
+                fuelText.setText("-- л");
             } else {
                 int liters = (int) fuel;
-                fuelText.setText(liters + " " + getLiterWord(liters));
+                fuelText.setText(liters + " л");
             }
             int color = low ? Color.RED : (isDarkText() ? Color.BLACK : Color.WHITE);
             fuelText.setTextColor(color);
@@ -277,19 +256,12 @@ public class FloatingFuelService extends Service {
     private void showError() {
         handler.post(() -> {
             if (fuelText != null) {
-                fuelText.setText("-- литров");
+                fuelText.setText("-- л");
                 int color = isDarkText() ? Color.BLACK : Color.WHITE;
                 fuelText.setTextColor(color);
                 if (iconView != null) iconView.setColorFilter(color);
             }
         });
-    }
-
-    private String getLiterWord(int n) {
-        int m10 = n % 10, m100 = n % 100;
-        if (m10 == 1 && m100 != 11) return "литр";
-        if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return "литра";
-        return "литров";
     }
 
     private boolean isDarkText() {
@@ -305,7 +277,7 @@ public class FloatingFuelService extends Service {
         try {
             if (usageStatsManager == null) return;
             long t = System.currentTimeMillis();
-            UsageEvents events = usageStatsManager.queryEvents(t - 2000, t);
+            UsageEvents events = usageStatsManager.queryEvents(t - 10000, t);
             String lastPkg = null;
             UsageEvents.Event e = new UsageEvents.Event();
             while (events.hasNextEvent()) {
